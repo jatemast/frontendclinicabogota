@@ -1,0 +1,47 @@
+{
+  "extends": "@vue/tsconfig/tsconfig.web.json",
+  "include": ["env.d.ts", "src/**/*", "src/**/*.vue", "src/types/vue-datepicker.d.ts"],
+  "exclude": ["node_modules/@vuepic/vue-datepicker/node_modules/date-fns"],
+  "compilerOptions": {
+    "baseUrl": ".",
+    "skipLibCheck": true,
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+    "allowJs": true,
+    "lib": ["es2020", "dom"],
+    
+    // 1. Activamos la nueva sintaxis
+    "verbatimModuleSyntax": true,
+
+    // 2. Anulamos las opciones obsoletas que vienen del "extends"
+    "preserveValueImports": false,
+    "importsNotUsedAsValues": "remove" 
+  },
+  "references": [
+    {
+      "path": "./tsconfig.vite-config.json"
+    }
+  ]
+}
+// {
+//   "extends": "@vue/tsconfig/tsconfig.web.json",
+//   "include": ["env.d.ts", "src/**/*", "src/**/*.vue", "src/types/vue-datepicker.d.ts"],
+//   "exclude": ["node_modules/@vuepic/vue-datepicker/node_modules/date-fns"],
+//   "compilerOptions": {
+//     "baseUrl": ".",
+//     "skipLibCheck": true,
+//     "paths": {
+//       "@/*": ["./src/*"]
+//     },
+//     "allowJs": true,
+//     "lib": ["es2020", "dom"],
+//     "verbatimModuleSyntax": true
+//   },
+//   "references": [
+//     {
+//       "path": "./tsconfig.vite-config.json"
+//     }
+//   ]
+// }
+
