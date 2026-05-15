@@ -89,6 +89,41 @@
                                     <p class="text-caption text-grey mt-1">No hay foto registrada</p>
                                 </div>
                             </v-col>
+                            <v-col cols="12" md="6" class="d-flex flex-column align-center justify-center">
+                                <v-btn
+                                    color="primary"
+                                    variant="tonal"
+                                    prepend-icon="mdi-camera-plus"
+                                    @click="triggerBeforeFileInput"
+                                    block
+                                    rounded="lg"
+                                    class="mb-2"
+                                >
+                                    {{ beforeFile ? 'Cambiar foto' : (history.tx_img_before ? 'Actualizar foto' : 'Subir foto del antes') }}
+                                </v-btn>
+                                <input
+                                    ref="beforeFileInputRef"
+                                    type="file"
+                                    accept="image/*"
+                                    capture="environment"
+                                    style="display: none"
+                                    @change="onBeforeImageSelected"
+                                />
+                                <v-chip v-if="beforePreview" color="success" variant="tonal" size="small">
+                                    <v-icon start>mdi-check-circle</v-icon> Nueva foto lista para guardar
+                                </v-chip>
+                            </v-col>
+                        </v-row>
+                        <!-- Preview de la nueva imagen antes -->
+                        <v-row v-if="beforePreview">
+                            <v-col cols="12" class="text-center">
+                                <v-img
+                                    :src="beforePreview"
+                                    max-height="200"
+                                    contain
+                                    class="rounded-lg border"
+                                ></v-img>
+                            </v-col>
                         </v-row>
 
                         <!-- ===== IMAGEN DESPUÉS DEL PROCEDIMIENTO ===== -->
@@ -129,7 +164,7 @@
                                     rounded="lg"
                                     class="mb-2"
                                 >
-                                    {{ afterFile ? 'Cambiar foto' : 'Subir foto del después' }}
+                                    {{ afterFile ? 'Cambiar foto' : (history.tx_img_after ? 'Actualizar foto' : 'Subir foto del después') }}
                                 </v-btn>
                                 <input
                                     ref="afterFileInputRef"
@@ -438,6 +473,27 @@ const loadingHabits = ref(false);
 const newHabit = ref('');
 const savingHabit = ref(false);
 
+// --- Imagen ANTES ---
+const beforeFileInputRef = ref(null);
+const beforeFile = ref(null);
+const beforePreview = ref('');
+
+const triggerBeforeFileInput = () => {
+    beforeFileInputRef.value?.click();
+};
+
+const onBeforeImageSelected = (event) => {
+    const target = event.target;
+    if (target.files && target.files[0]) {
+        beforeFile.value = target.files[0];
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            beforePreview.value = e.target?.result;
+        };
+        reader.readAsDataURL(target.files[0]);
+    }
+};
+
 // --- Imagen DESPUÉS ---
 const afterFileInputRef = ref(null);
 const afterFile = ref(null);
@@ -566,6 +622,14 @@ const calculateIMC = () => {
 const updateSection = async (sectionName) => {
     saving.value = sectionName;
     try {
+        // Si es la sección resumen y hay una nueva imagen "antes", asignar el base64 directamente
+        if (sectionName === 'resumen' && beforePreview.value) {
+            history.value.tx_img_before = beforePreview.value;
+            beforeFile.value = null;
+            beforePreview.value = '';
+            if (beforeFileInputRef.value) beforeFileInputRef.value.value = '';
+        }
+
         // Si es la sección resumen y hay una nueva imagen "después", asignar el base64 directamente
         // (el backend la subirá a ImgBB internamente)
         if (sectionName === 'resumen' && afterPreview.value) {
