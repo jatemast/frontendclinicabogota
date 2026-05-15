@@ -60,6 +60,127 @@
                             <v-chip v-for="proc in history.procedures" :key="proc.id" class="me-2" color="success" variant="tonal" size="small" prepend-icon="mdi-needle">
                                 {{ proc.tx_name }}
                             </v-chip>
+
+                        <!-- ===== IMAGEN ANTES DEL PROCEDIMIENTO ===== -->
+                        <v-divider class="my-4"></v-divider>
+                        <div class="text-overline text-primary mb-2">
+                            <v-icon start size="14">mdi-camera-before</v-icon> Foto ANTES del procedimiento
+                        </div>
+                        <v-row>
+                            <v-col cols="12" md="6">
+                                <div v-if="history.tx_img_before" class="text-center">
+                                    <v-img
+                                        :src="history.tx_img_before"
+                                        max-height="250"
+                                        contain
+                                        class="rounded-lg border mb-2"
+                                    ></v-img>
+                                    <v-btn
+                                        size="small"
+                                        color="primary"
+                                        variant="tonal"
+                                        :href="history.tx_img_before"
+                                        target="_blank"
+                                        prepend-icon="mdi-open-in-new"
+                                    >Ver original</v-btn>
+                                </div>
+                                <div v-else class="text-center pa-6 bg-grey-lighten-4 rounded-lg">
+                                    <v-icon size="48" color="grey-lighten-2">mdi-image-off</v-icon>
+                                    <p class="text-caption text-grey mt-1">No hay foto registrada</p>
+                                </div>
+                            </v-col>
+                        </v-row>
+
+                        <!-- ===== IMAGEN DESPUÉS DEL PROCEDIMIENTO ===== -->
+                        <v-divider class="my-4"></v-divider>
+                        <div class="text-overline text-primary mb-2">
+                            <v-icon start size="14">mdi-camera-after</v-icon> Foto DESPUÉS del procedimiento
+                        </div>
+                        <v-row>
+                            <v-col cols="12" md="6">
+                                <div v-if="history.tx_img_after" class="text-center">
+                                    <v-img
+                                        :src="history.tx_img_after"
+                                        max-height="250"
+                                        contain
+                                        class="rounded-lg border mb-2"
+                                    ></v-img>
+                                    <v-btn
+                                        size="small"
+                                        color="primary"
+                                        variant="tonal"
+                                        :href="history.tx_img_after"
+                                        target="_blank"
+                                        prepend-icon="mdi-open-in-new"
+                                    >Ver original</v-btn>
+                                </div>
+                                <div v-else class="text-center pa-6 bg-grey-lighten-4 rounded-lg">
+                                    <v-icon size="48" color="grey-lighten-2">mdi-image-plus</v-icon>
+                                    <p class="text-caption text-grey mt-1">Aún no se ha registrado foto del después</p>
+                                </div>
+                            </v-col>
+                            <v-col cols="12" md="6" class="d-flex flex-column align-center justify-center">
+                                <v-btn
+                                    color="primary"
+                                    variant="tonal"
+                                    prepend-icon="mdi-camera-plus"
+                                    @click="triggerAfterFileInput"
+                                    block
+                                    rounded="lg"
+                                    class="mb-2"
+                                >
+                                    {{ afterFile ? 'Cambiar foto' : 'Subir foto del después' }}
+                                </v-btn>
+                                <input
+                                    ref="afterFileInputRef"
+                                    type="file"
+                                    accept="image/*"
+                                    capture="environment"
+                                    style="display: none"
+                                    @change="onAfterImageSelected"
+                                />
+                                <v-chip v-if="afterPreview" color="success" variant="tonal" size="small">
+                                    <v-icon start>mdi-check-circle</v-icon> Nueva foto lista para guardar
+                                </v-chip>
+                            </v-col>
+                        </v-row>
+                        <!-- Preview de la nueva imagen después -->
+                        <v-row v-if="afterPreview">
+                            <v-col cols="12" class="text-center">
+                                <v-img
+                                    :src="afterPreview"
+                                    max-height="200"
+                                    contain
+                                    class="rounded-lg border"
+                                ></v-img>
+                            </v-col>
+                        </v-row>
+
+                        <!-- ===== FIRMA DE CONSENTIMIENTO ===== -->
+                        <v-divider class="my-4"></v-divider>
+                        <div class="text-overline text-primary mb-2">
+                            <v-icon start size="14">mdi-draw</v-icon> Firma de Consentimiento
+                        </div>
+                        <v-row>
+                            <v-col cols="12" md="6">
+                                <div v-if="history.tx_signature" class="text-center">
+                                    <v-img
+                                        :src="history.tx_signature"
+                                        max-height="150"
+                                        contain
+                                        class="rounded-lg border mb-2"
+                                        style="background: #fafafa;"
+                                    ></v-img>
+                                    <v-chip color="success" variant="tonal" size="x-small">
+                                        <v-icon start>mdi-check-circle</v-icon> Firma registrada
+                                    </v-chip>
+                                </div>
+                                <div v-else class="text-center pa-6 bg-grey-lighten-4 rounded-lg">
+                                    <v-icon size="48" color="grey-lighten-2">mdi-file-sign</v-icon>
+                                    <p class="text-caption text-grey mt-1">Sin firma de consentimiento</p>
+                                </div>
+                            </v-col>
+                        </v-row>
                     </v-form>
                 </v-window-item>
 
@@ -317,6 +438,44 @@ const loadingHabits = ref(false);
 const newHabit = ref('');
 const savingHabit = ref(false);
 
+// --- Imagen DESPUÉS ---
+const afterFileInputRef = ref(null);
+const afterFile = ref(null);
+const afterPreview = ref('');
+
+const triggerAfterFileInput = () => {
+    afterFileInputRef.value?.click();
+};
+
+const onAfterImageSelected = (event) => {
+    const target = event.target;
+    if (target.files && target.files[0]) {
+        afterFile.value = target.files[0];
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            afterPreview.value = e.target?.result;
+        };
+        reader.readAsDataURL(target.files[0]);
+    }
+};
+
+const uploadImageToImgbb = async (file) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    try {
+        const response = await axios.post(`${import.meta.env.VITE_API_URL}api/imgbb/upload`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        if (response.data?.success && response.data?.data?.url) {
+            return response.data.data.url;
+        }
+        throw new Error(response.data?.message || 'Error al subir imagen');
+    } catch (error) {
+        console.error('Error uploading to ImgBB', error);
+        throw error;
+    }
+};
+
 // Mapeo de valores de tab a nombres de permisos de tu API
 const tabPermissions = [
     { value: 'resumen', permission: 'Historia Clinica Resumen' },
@@ -424,6 +583,22 @@ const calculateIMC = () => {
 const updateSection = async (sectionName) => {
     saving.value = sectionName;
     try {
+        // Si es la sección resumen y hay una nueva imagen "después", subirla primero
+        if (sectionName === 'resumen' && afterFile.value) {
+            try {
+                const imgUrl = await uploadImageToImgbb(afterFile.value);
+                history.value.tx_img_after = imgUrl;
+                afterFile.value = null;
+                afterPreview.value = '';
+                // Resetear el input file
+                if (afterFileInputRef.value) afterFileInputRef.value.value = '';
+            } catch {
+                notify('error', 'Error al subir la imagen del después. Intente de nuevo.');
+                saving.value = null;
+                return;
+            }
+        }
+
         const response = await axios.post(`${import.meta.env.VITE_API_URL}medicalhistory/upd`, history.value);
         if (response.data.status) {
             notify('success', `Sección actualizada correctamente`);

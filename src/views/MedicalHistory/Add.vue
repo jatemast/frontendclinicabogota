@@ -67,8 +67,9 @@
                             <div class="text-body-2">Cotización: <strong>#{{ selectedCoty.tx_nro }}</strong> | DNI: {{ selectedCoty.tx_dni }}</div>
                         </div>
 
+                        <!-- Procedimientos a realizar -->
                         <v-label class="font-weight-bold mb-2 text-primary text-uppercase">Procedimientos a realizar</v-label>
-                        <div class="mb-6">
+                        <div class="mb-4">
                             <div v-if="loadingProcedures" class="d-flex align-center pa-4">
                                 <v-progress-circular indeterminate size="20" width="2" color="primary" class="mr-3"></v-progress-circular>
                                 <span class="text-caption">Cargando procedimientos...</span>
@@ -99,8 +100,118 @@
                             </v-alert>
                         </div>
 
-                        <v-divider class="mb-6"></v-divider>
+                        <!-- Imagen ANTES del procedimiento estético -->
+                        <v-divider class="mb-4"></v-divider>
+                        <v-label class="font-weight-bold mb-2 text-primary text-uppercase">
+                            <v-icon start>mdi-camera</v-icon> Foto ANTES del procedimiento
+                        </v-label>
+                        <div class="mb-4">
+                            <v-row align="center">
+                                <v-col cols="12" sm="6">
+                                    <v-btn
+                                        color="primary"
+                                        variant="tonal"
+                                        prepend-icon="mdi-camera-plus"
+                                        @click="triggerFileInput"
+                                        block
+                                        rounded="lg"
+                                    >
+                                        {{ imageBeforeFile ? 'Cambiar imagen' : 'Tomar o seleccionar foto' }}
+                                    </v-btn>
+                                    <input
+                                        ref="fileInputRef"
+                                        type="file"
+                                        accept="image/*"
+                                        capture="environment"
+                                        style="display: none"
+                                        @change="onImageBeforeSelected"
+                                    />
+                                </v-col>
+                                <v-col cols="12" sm="6" class="text-center">
+                                    <v-chip v-if="imageBeforePreview" color="success" variant="tonal" size="small">
+                                        <v-icon start>mdi-check-circle</v-icon> Foto seleccionada
+                                    </v-chip>
+                                    <span v-else class="text-caption text-grey">Ninguna foto seleccionada</span>
+                                </v-col>
+                            </v-row>
+                            <!-- Preview de la imagen antes -->
+                            <v-row v-if="imageBeforePreview" class="mt-2">
+                                <v-col cols="12" class="text-center">
+                                    <v-img
+                                        :src="imageBeforePreview"
+                                        max-height="250"
+                                        contain
+                                        class="rounded-lg border"
+                                    ></v-img>
+                                    <v-btn
+                                        size="x-small"
+                                        color="error"
+                                        variant="text"
+                                        icon="mdi-close-circle"
+                                        class="mt-1"
+                                        @click="removeImageBefore"
+                                    ></v-btn>
+                                </v-col>
+                            </v-row>
+                        </div>
 
+                        <!-- FIRMA DIGITAL -->
+                        <v-divider class="mb-4"></v-divider>
+                        <v-label class="font-weight-bold mb-2 text-primary text-uppercase">
+                            <v-icon start>mdi-draw</v-icon> Firma de Consentimiento
+                        </v-label>
+                        <div class="mb-4">
+                            <v-row>
+                                <v-col cols="12" class="text-center">
+                                    <div class="signature-container">
+                                        <canvas
+                                            ref="signatureCanvas"
+                                            :width="canvasWidth"
+                                            :height="canvasHeight"
+                                            class="signature-canvas border rounded-lg"
+                                            @mousedown="startSign"
+                                            @mousemove="drawSign"
+                                            @mouseup="endSign"
+                                            @mouseleave="endSign"
+                                            @touchstart.prevent="onTouchStart"
+                                            @touchmove.prevent="onTouchMove"
+                                            @touchend="onTouchEnd"
+                                        ></canvas>
+                                        <div v-if="!signatureDrawn" class="signature-placeholder">
+                                            <v-icon size="40" color="grey-lighten-2">mdi-draw</v-icon>
+                                            <p class="text-caption text-grey mt-1">Firme aquí usando el mouse o su dedo</p>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex justify-center ga-2 mt-2">
+                                        <v-btn
+                                            size="small"
+                                            color="error"
+                                            variant="tonal"
+                                            prepend-icon="mdi-eraser"
+                                            @click="clearSignature"
+                                        >
+                                            Limpiar
+                                        </v-btn>
+                                        <v-btn
+                                            v-if="signatureDrawn"
+                                            size="small"
+                                            color="success"
+                                            variant="tonal"
+                                            prepend-icon="mdi-check"
+                                            @click="confirmSignature"
+                                        >
+                                            Confirmar firma
+                                        </v-btn>
+                                    </div>
+                                    <v-chip v-if="signatureConfirmed" color="success" variant="tonal" size="small" class="mt-2">
+                                        <v-icon start>mdi-check-circle</v-icon> Firma registrada
+                                    </v-chip>
+                                </v-col>
+                            </v-row>
+                        </div>
+
+                        <!-- Motivo de Consulta -->
+                        <v-divider class="mb-4"></v-divider>
                         <v-label class="font-weight-bold mb-2 text-primary text-uppercase">Motivo de Consulta</v-label>
                         <v-textarea
                             v-model="form.tx_motivo_consulta"
@@ -138,7 +249,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 import { useNotification } from '@/utils/useNotification';
@@ -159,11 +270,158 @@ const selectedCoty = ref<any>(null);
 
 const form = ref({
     id_coty: '',
-    tx_motivo_consulta: ''
+    tx_motivo_consulta: '',
+    tx_img_before: '',
+    tx_signature: ''
 });
 
-onMounted(() => fetchCotys());
+// --- Imagen ANTES ---
+const fileInputRef = ref<HTMLInputElement | null>(null);
+const imageBeforeFile = ref<File | null>(null);
+const imageBeforePreview = ref<string>('');
 
+const triggerFileInput = () => {
+    fileInputRef.value?.click();
+};
+
+const onImageBeforeSelected = (event: Event) => {
+    const target = event.target as HTMLInputElement;
+    if (target.files && target.files[0]) {
+        imageBeforeFile.value = target.files[0];
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            imageBeforePreview.value = e.target?.result as string;
+        };
+        reader.readAsDataURL(target.files[0]);
+    }
+};
+
+const removeImageBefore = () => {
+    imageBeforeFile.value = null;
+    imageBeforePreview.value = '';
+    form.value.tx_img_before = '';
+    if (fileInputRef.value) fileInputRef.value.value = '';
+};
+
+// --- FIRMA DIGITAL ---
+const signatureCanvas = ref<HTMLCanvasElement | null>(null);
+const canvasWidth = ref(500);
+const canvasHeight = ref(200);
+const isDrawing = ref(false);
+const signatureDrawn = ref(false);
+const signatureConfirmed = ref(false);
+let canvasContext: CanvasRenderingContext2D | null = null;
+
+const getCanvasPos = (e: MouseEvent | Touch) => {
+    const canvas = signatureCanvas.value;
+    if (!canvas) return { x: 0, y: 0 };
+    const rect = canvas.getBoundingClientRect();
+    return {
+        x: (e.clientX - rect.left) * (canvas.width / rect.width),
+        y: (e.clientY - rect.top) * (canvas.height / rect.height)
+    };
+};
+
+const startSign = (e: MouseEvent) => {
+    if (signatureConfirmed.value) return;
+    isDrawing.value = true;
+    signatureDrawn.value = true;
+    const ctx = signatureCanvas.value?.getContext('2d');
+    if (!ctx) return;
+    canvasContext = ctx;
+    const pos = getCanvasPos(e);
+    ctx.beginPath();
+    ctx.moveTo(pos.x, pos.y);
+};
+
+const drawSign = (e: MouseEvent) => {
+    if (!isDrawing.value || !canvasContext) return;
+    const pos = getCanvasPos(e);
+    canvasContext.lineWidth = 3;
+    canvasContext.lineCap = 'round';
+    canvasContext.strokeStyle = '#1a1a2e';
+    canvasContext.lineTo(pos.x, pos.y);
+    canvasContext.stroke();
+};
+
+const endSign = () => {
+    isDrawing.value = false;
+};
+
+let lastTouchPos: { x: number; y: number } | null = null;
+
+const onTouchStart = (e: TouchEvent) => {
+    if (signatureConfirmed.value) return;
+    isDrawing.value = true;
+    signatureDrawn.value = true;
+    const ctx = signatureCanvas.value?.getContext('2d');
+    if (!ctx) return;
+    canvasContext = ctx;
+    const touch = e.touches[0];
+    const pos = getCanvasPos(touch);
+    lastTouchPos = pos;
+    ctx.beginPath();
+    ctx.moveTo(pos.x, pos.y);
+};
+
+const onTouchMove = (e: TouchEvent) => {
+    if (!isDrawing.value || !canvasContext) return;
+    const touch = e.touches[0];
+    const pos = getCanvasPos(touch);
+    canvasContext.lineWidth = 3;
+    canvasContext.lineCap = 'round';
+    canvasContext.strokeStyle = '#1a1a2e';
+    canvasContext.lineTo(pos.x, pos.y);
+    canvasContext.stroke();
+    lastTouchPos = pos;
+};
+
+const onTouchEnd = () => {
+    isDrawing.value = false;
+    lastTouchPos = null;
+};
+
+const clearSignature = () => {
+    const canvas = signatureCanvas.value;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    signatureDrawn.value = false;
+    signatureConfirmed.value = false;
+    form.value.tx_signature = '';
+};
+
+const confirmSignature = () => {
+    if (!signatureDrawn.value) return;
+    const canvas = signatureCanvas.value;
+    if (!canvas) return;
+    // Convertir a PNG base64
+    form.value.tx_signature = canvas.toDataURL('image/png');
+    signatureConfirmed.value = true;
+    notify('success', 'Firma registrada correctamente');
+};
+
+// Ajustar canvas width según el ancho de pantalla
+const updateCanvasWidth = () => {
+    const container = signatureCanvas.value?.parentElement;
+    if (container) {
+        const w = Math.min(container.clientWidth - 32, 500);
+        canvasWidth.value = w;
+    }
+};
+
+onMounted(() => {
+    fetchCotys();
+    updateCanvasWidth();
+    window.addEventListener('resize', updateCanvasWidth);
+});
+
+onBeforeUnmount(() => {
+    window.removeEventListener('resize', updateCanvasWidth);
+});
+
+// --- Funciones existentes ---
 const fetchCotys = async () => {
     loading.value = true;
     try {
@@ -207,14 +465,44 @@ const filteredCotys = computed(() => {
     );
 });
 
+const uploadImageToImgbb = async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append('image', file);
+    try {
+        const response = await axios.post(`${import.meta.env.VITE_API_URL}api/imgbb/upload`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        if (response.data?.success && response.data?.data?.url) {
+            return response.data.data.url;
+        }
+        throw new Error(response.data?.message || 'Error al subir imagen');
+    } catch (error) {
+        console.error('Error uploading to ImgBB', error);
+        throw error;
+    }
+};
+
 const submitHistory = async () => {
     if (!form.value.tx_motivo_consulta) return;
     
     isSubmitting.value = true;
     try {
+        // 1. Subir imagen ANTES si existe
+        if (imageBeforeFile.value) {
+            try {
+                const imgUrl = await uploadImageToImgbb(imageBeforeFile.value);
+                form.value.tx_img_before = imgUrl;
+            } catch {
+                notify('error', 'Error al subir la imagen. Intente de nuevo.');
+                isSubmitting.value = false;
+                return;
+            }
+        }
+
+        // 2. Crear historia clínica
         const response = await axios.post(`${import.meta.env.VITE_API_URL}medicalhistory/add`, form.value);
         if (response.data.status) {
-            notify('success', response.data.msg ||  'Historia clínica iniciada');
+            notify('success', response.data.msg || 'Historia clínica iniciada');
             router.push('/medical-history'); 
         } else {
             notify('error', response.data.msg || 'Error al iniciar historia clínica');
@@ -228,9 +516,31 @@ const submitHistory = async () => {
 </script>
 
 <style scoped>
-/* (Se mantienen tus estilos de avatar, card, etc.) */
 .coty-card { border: 2px solid transparent; cursor: pointer; transition: all 0.2s ease;  }
 .coty-card:hover { border-color: rgb(var(--v-theme-primary)); transform: translateY(-2px); }
 .selected-coty-info { background: rgba(var(--v-theme-primary), 0.05); border-left: 4px solid rgb(var(--v-theme-primary)); }
 .btn-gradient { background: linear-gradient(45deg, rgb(var(--v-theme-primary)), #4db6ac) !important; color: white !important; }
+
+.signature-container {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+    max-width: 500px;
+}
+.signature-canvas {
+    width: 100%;
+    height: 200px;
+    border: 2px dashed #ccc;
+    background: #fafafa;
+    cursor: crosshair;
+    touch-action: none;
+}
+.signature-placeholder {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    text-align: center;
+}
 </style>
