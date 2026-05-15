@@ -102,15 +102,15 @@ const handleLogin = async () => {
         </v-btn>
     </v-form>
 
-    <div class="text-center mt-4 mb-6">
+    <!-- Registro deshabilitado -->
+    <!-- <div class="text-center mt-4 mb-6">
         <div class="text-center">
             <RouterLink to="/register-business" class="register-link">
             <v-icon start size="18">mdi-store-plus-outline</v-icon>
             REGISTRAR MI CLÍNICA
             </RouterLink>
         </div>
-
-    </div>
+    </div> -->
 </template>
 
 <style scoped>

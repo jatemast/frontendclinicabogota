@@ -35,11 +35,12 @@ const AuthRoutes = {
       path: '/access-control',
       component: () => import('@/views/AccessControl/AccessControl.vue')
     },
-    {
-      name: 'Register',
-      path: '/register-business',
-      component: () => import('@/views/Login/RegisterBusiness.vue')
-    },
+    // Registro deshabilitado
+    // {
+    //   name: 'Register',
+    //   path: '/register-business',
+    //   component: () => import('@/views/Login/RegisterBusiness.vue')
+    // },
 
   ]
 };
