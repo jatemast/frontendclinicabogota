@@ -465,45 +465,21 @@ const filteredCotys = computed(() => {
     );
 });
 
-const uploadImageToImgbb = async (file: File): Promise<string> => {
-    const formData = new FormData();
-    formData.append('image', file);
-    try {
-        const response = await axios.post(`${import.meta.env.VITE_API_URL}api/imgbb/upload`, formData, {
-            headers: { 'Content-Type': 'multipart/form-data' }
-        });
-        if (response.data?.success && response.data?.data?.url) {
-            return response.data.data.url;
-        }
-        throw new Error(response.data?.message || 'Error al subir imagen');
-    } catch (error) {
-        console.error('Error uploading to ImgBB', error);
-        throw error;
-    }
-};
-
 const submitHistory = async () => {
     if (!form.value.tx_motivo_consulta) return;
     
     isSubmitting.value = true;
     try {
-        // 1. Subir imagen ANTES si existe
-        if (imageBeforeFile.value) {
-            try {
-                const imgUrl = await uploadImageToImgbb(imageBeforeFile.value);
-                form.value.tx_img_before = imgUrl;
-            } catch {
-                notify('error', 'Error al subir la imagen. Intente de nuevo.');
-                isSubmitting.value = false;
-                return;
-            }
+        // Asignar la imagen en base64 directamente (el backend la subirá a ImgBB)
+        if (imageBeforePreview.value) {
+            form.value.tx_img_before = imageBeforePreview.value;
         }
 
-        // 2. Crear historia clínica
+        // Crear historia clínica (el backend sube las imágenes a ImgBB internamente)
         const response = await axios.post(`${import.meta.env.VITE_API_URL}medicalhistory/add`, form.value);
         if (response.data.status) {
             notify('success', response.data.msg || 'Historia clínica iniciada');
-            router.push('/medical-history'); 
+            router.push('/medical-history');
         } else {
             notify('error', response.data.msg || 'Error al iniciar historia clínica');
         }

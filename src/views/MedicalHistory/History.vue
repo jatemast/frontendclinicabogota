@@ -459,23 +459,6 @@ const onAfterImageSelected = (event) => {
     }
 };
 
-const uploadImageToImgbb = async (file) => {
-    const formData = new FormData();
-    formData.append('image', file);
-    try {
-        const response = await axios.post(`${import.meta.env.VITE_API_URL}api/imgbb/upload`, formData, {
-            headers: { 'Content-Type': 'multipart/form-data' }
-        });
-        if (response.data?.success && response.data?.data?.url) {
-            return response.data.data.url;
-        }
-        throw new Error(response.data?.message || 'Error al subir imagen');
-    } catch (error) {
-        console.error('Error uploading to ImgBB', error);
-        throw error;
-    }
-};
-
 // Mapeo de valores de tab a nombres de permisos de tu API
 const tabPermissions = [
     { value: 'resumen', permission: 'Historia Clinica Resumen' },
@@ -583,20 +566,13 @@ const calculateIMC = () => {
 const updateSection = async (sectionName) => {
     saving.value = sectionName;
     try {
-        // Si es la sección resumen y hay una nueva imagen "después", subirla primero
-        if (sectionName === 'resumen' && afterFile.value) {
-            try {
-                const imgUrl = await uploadImageToImgbb(afterFile.value);
-                history.value.tx_img_after = imgUrl;
-                afterFile.value = null;
-                afterPreview.value = '';
-                // Resetear el input file
-                if (afterFileInputRef.value) afterFileInputRef.value.value = '';
-            } catch {
-                notify('error', 'Error al subir la imagen del después. Intente de nuevo.');
-                saving.value = null;
-                return;
-            }
+        // Si es la sección resumen y hay una nueva imagen "después", asignar el base64 directamente
+        // (el backend la subirá a ImgBB internamente)
+        if (sectionName === 'resumen' && afterPreview.value) {
+            history.value.tx_img_after = afterPreview.value;
+            afterFile.value = null;
+            afterPreview.value = '';
+            if (afterFileInputRef.value) afterFileInputRef.value.value = '';
         }
 
         const response = await axios.post(`${import.meta.env.VITE_API_URL}medicalhistory/upd`, history.value);
