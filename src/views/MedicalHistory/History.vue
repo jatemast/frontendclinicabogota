@@ -646,7 +646,21 @@ const updateSection = async (sectionName) => {
             notify('warning', response.data.msg || 'Error al actualizar');
         }
     } catch (error) {
-        notify('error', 'Error de conexión');
+        console.error('Error al actualizar historia clínica:', error);
+        // Extraer mensaje de error detallado
+        let errorMsg = 'Error de conexión';
+        if (error.response) {
+            // El servidor respondió con un código de error
+            errorMsg = `Error ${error.response.status}: ${error.response.data?.msg || error.response.data?.message || error.response.statusText}`;
+            console.error('Respuesta del servidor:', error.response.data);
+        } else if (error.request) {
+            // La petición fue hecha pero no se recibió respuesta
+            errorMsg = 'No se recibió respuesta del servidor. Verifica que el backend esté corriendo.';
+        } else {
+            // Algo pasó al configurar la petición
+            errorMsg = error.message;
+        }
+        notify('error', errorMsg);
     } finally {
         saving.value = null;
     }
