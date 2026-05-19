@@ -12,6 +12,7 @@ import { userPermissions, refreshPermissions } from '@/utils/permissions';
 
 const { lgAndUp } = useDisplay();
 const sDrawer = ref(true);
+const railMode = ref(true); // Nuevo estado para controlar el modo colapsado/expandido
 const isLoading = ref(true);
 const isImpersonating = ref(false);
 
@@ -89,19 +90,20 @@ const filteredMenu = computed(() => {
         app 
         :permanent="lgAndUp"
         :temporary="!lgAndUp"
-        :width="lgAndUp ? 95 : 280" 
-        :class="lgAndUp ? 'premium-sidebar-rail' : 'mobile-sidebar'"
+        :width="lgAndUp ? (railMode ? 95 : 280) : 280" 
+        :class="[lgAndUp ? 'premium-sidebar-rail' : 'mobile-sidebar', { 'expanded-sidebar': lgAndUp && !railMode }]"
         elevation="0"
+        :rail="lgAndUp && railMode"
     >
         <div class="d-flex flex-column h-100 py-6">
             <div :class="[
                 'logo-wrapper', 
                 lgAndUp ? 'logo-pc mb-6' : 'logo-mobile w-100 px-6 mb-6'
                  ]">
-                <Logo :is-mini="lgAndUp" /> 
+                <Logo :is-mini="lgAndUp && railMode" /> <!-- Modificado para pasar is-mini basado en railMode -->
             </div>
 
-            <v-divider class="w-50 mb-4 opacity-10 align-self-center" v-if="lgAndUp"></v-divider>
+            <v-divider class="w-50 mb-4 opacity-10 align-self-center" v-if="lgAndUp && railMode"></v-divider> <!-- Divider condicional -->
 
             <div class="scroll-wrapper flex-grow-1">
                 <Transition name="fade">
@@ -122,13 +124,13 @@ const filteredMenu = computed(() => {
                     <div class="menu-items-container w-100">
                         <template v-for="(item, i) in filteredMenu">
                             <div v-if="item.header" :key="item.title" class="w-100">
-                                <div v-if="lgAndUp" class="section-dot"></div>
+                                <NavGroup v-if="lgAndUp" :item="item" :rail-mode="railMode" />
                                 <v-list-subheader v-else class="text-uppercase text-caption font-weight-bold ml-4 text-primary">
                                     {{ item.header }}
                                 </v-list-subheader>
                             </div>
                             
-                            <NavItem v-else :item="item" :key="i" :is-mobile="!lgAndUp" />
+                            <NavItem v-else :item="item" :key="i" :is-mobile="!lgAndUp" :rail-mode="railMode" />
                         </template>
                     </div>
                 </div>
@@ -179,6 +181,17 @@ const filteredMenu = computed(() => {
                             size="small"
                         >
                             <Menu2Icon size="20" />
+                        </v-btn>
+
+                        <v-btn
+                            v-if="lgAndUp"
+                            class="text-muted ml-2"
+                            @click="railMode = !railMode"
+                            icon
+                            variant="text"
+                            size="small"
+                        >
+                            <v-icon>{{ railMode ? 'mdi-chevron-right' : 'mdi-chevron-left' }}</v-icon>
                         </v-btn>
                     </div>
 
@@ -247,6 +260,26 @@ const filteredMenu = computed(() => {
     margin: 0 !important;
     height: 100vh !important;
 }
+
+/* Clases para el sidebar expandido en desktop */
+.expanded-sidebar {
+    width: 280px !important; /* Ancho completo */
+    .logo-pc :deep(img),
+    .logo-pc :deep(svg) {
+        width: 120px !important; /* Logotipo más grande */
+    }
+    .menu-items-container {
+        align-items: flex-start; /* Alinea los items a la izquierda */
+        padding-left: 15px; /* Pequeño padding para el texto */
+    }
+    /* Asegúrate de que los subencabezados de los grupos sean visibles */
+    :deep(.v-list-subheader) {
+        opacity: 1 !important;
+        visibility: visible !important;
+        height: auto !important; /* Permite que el contenido tome la altura necesaria */
+    }
+}
+
 
 /* --- SCROLL LOGIC --- */
 .scroll-wrapper {

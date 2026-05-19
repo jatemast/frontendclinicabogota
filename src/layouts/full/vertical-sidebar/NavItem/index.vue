@@ -3,13 +3,30 @@ import Icon from '../Icon.vue';
 const props = defineProps({ 
     item: Object, 
     level: Number,
-    isMobile: Boolean 
+    isMobile: Boolean,
+    railMode: Boolean
 });
 </script>
 
 <template>
+    <!-- Versión móvil (siempre expandida) -->
+    <v-list-item
+        v-if="isMobile"
+        :to="item.to"
+        exact
+        class="mobile-nav-item mx-4 mb-2"
+        rounded="xl"
+        active-class="active-mobile"
+    >
+        <template v-slot:prepend>
+            <Icon :item="item.icon" size="20" class="mr-3" />
+        </template>
+        <v-list-item-title class="font-weight-medium">{{ item.title }}</v-list-item-title>
+    </v-list-item>
+
+    <!-- Versión desktop - Colapsada (solo ícono con tooltip) -->
     <v-tooltip 
-        v-if="!isMobile"
+        v-else-if="railMode"
         location="right" 
         offset="15"
         transition="slide-x-transition"
@@ -33,13 +50,14 @@ const props = defineProps({
         </div>
     </v-tooltip>
 
+    <!-- Versión desktop - Expandida (ícono y texto) -->
     <v-list-item
         v-else
         :to="item.to"
         exact
-        class="mobile-nav-item mx-4 mb-2"
+        class="desktop-nav-item mx-4 mb-2"
         rounded="xl"
-        active-class="active-mobile"
+        active-class="active-desktop"
     >
         <template v-slot:prepend>
             <Icon :item="item.icon" size="20" class="mr-3" />
@@ -86,6 +104,38 @@ const props = defineProps({
     background: rgba(46, 236, 213, 0.12) !important;
     color: #2eced5 !important;
 }
+
+/* --- ESTILO DESKTOP EXPANDIDO --- */
+.desktop-nav-item {
+    color: #2A3547 !important; /* Mismo color que móvil por defecto */
+    margin-top: 5px;
+    margin-bottom: 5px;
+    height: 52px !important; /* Altura similar al botón colapsado */
+}
+
+.desktop-nav-item .v-list-item__prepend > .v-icon {
+    width: 22px; /* Tamaño de ícono uniforme */
+    height: 22px;
+}
+
+
+.desktop-nav-item.active-desktop,
+.desktop-nav-item.v-list-item--active {
+    background: linear-gradient(135deg, #2eced5 0%, #29b6bc 100%) !important;
+    color: white !important; 
+    box-shadow: 0 8px 15px rgba(46, 236, 213, 0.3) !important;
+}
+
+.desktop-nav-item.active-desktop :deep(.v-icon),
+.desktop-nav-item.active-desktop :deep(svg) {
+    color: white !important;
+}
+
+.desktop-nav-item:hover:not(.v-list-item--active) {
+    color: #2eced5 !important;
+    background: rgba(46, 236, 213, 0.08) !important;
+}
+
 
 /* --- TOOLTIP & OTROS --- */
 .glass-label {

@@ -1,10 +1,14 @@
 <script setup>
 import { DotsIcon } from 'vue-tabler-icons';
-const props = defineProps({ item: Object });
+const props = defineProps({ item: Object, railMode: Boolean });
 </script>
 
 <template>
-    <v-tooltip location="right" :text="props.item.header">
+    <v-tooltip 
+        v-if="railMode" 
+        location="right" 
+        :text="props.item.header"
+    >
         <template v-slot:activator="{ props: tooltip }">
             <div v-bind="tooltip" class="group-separator my-2">
                 <div class="line"></div>
@@ -13,6 +17,13 @@ const props = defineProps({ item: Object });
             </div>
         </template>
     </v-tooltip>
+
+    <v-list-subheader 
+        v-else 
+        class="text-uppercase text-caption font-weight-bold ml-4 mt-6 text-primary"
+    >
+        {{ props.item.header }}
+    </v-list-subheader>
 </template>
 
 <style scoped>
