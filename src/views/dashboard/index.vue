@@ -1,11 +1,17 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import axios from 'axios';
 import { useNotification } from '@/utils/useNotification';
 import UpcommingSchedule from '@/components/dashboards/UpcommingSchedule.vue';
 
 const { notify } = useNotification();
 const loading = ref(true);
+
+// Determinar si el usuario es Master
+const isMaster = computed(() => {
+    const val = localStorage.getItem('is_master');
+    return val === 'true' || val === '1';
+});
 
 // Estados para los datos simplificados
 const stats = ref({
@@ -16,17 +22,25 @@ const stats = ref({
 const fetchData = async () => {
     loading.value = true;
     try {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('access_token');
         const headers = { Authorization: `Bearer ${token}` };
 
-        // Solo pedimos datos de personal y clientes
-        const [resUsers, resCustomers] = await Promise.all([
-            axios.get(`${import.meta.env.VITE_API_URL}api/dashboard/usersbytype`, { headers }),
-            axios.get(`${import.meta.env.VITE_API_URL}api/dashboard/totalcustomers`, { headers })
-        ]);
+        // Siempre pedimos datos de personal
+        const promises = [
+            axios.get(`${import.meta.env.VITE_API_URL}api/dashboard/usersbytype`, { headers })
+        ];
+
+        // Solo los masters pueden ver datos de clientes
+        if (isMaster.value) {
+            promises.push(
+                axios.get(`${import.meta.env.VITE_API_URL}api/dashboard/totalcustomers`, { headers })
+            );
+        }
+
+        const [resUsers, resCustomers] = await Promise.all(promises);
 
         if (resUsers.data.status) stats.value.users = resUsers.data.data;
-        if (resCustomers.data.status) stats.value.totalCustomers = resCustomers.data.total;
+        if (resCustomers?.data?.status) stats.value.totalCustomers = resCustomers.data.total;
 
     } catch (error) {
         notify('error', 'Error al cargar indicadores');
@@ -87,32 +101,35 @@ onMounted(fetchData);
         </v-col>
     </v-row>
 
-    <div class="d-flex align-center mb-4">
-        <v-icon color="pink-accent-3" class="mr-2">mdi-account-group-outline</v-icon>
-        <span class="text-h6 font-weight-bold grey--text text--darken-1">Clientes</span>
-        <v-divider class="ml-4"></v-divider>
-    </div>
+    <!-- Sección de Clientes: SOLO visible para Masters -->
+    <template v-if="isMaster">
+        <div class="d-flex align-center mb-4">
+            <v-icon color="pink-accent-3" class="mr-2">mdi-account-group-outline</v-icon>
+            <span class="text-h6 font-weight-bold grey--text text--darken-1">Clientes</span>
+            <v-divider class="ml-4"></v-divider>
+        </div>
 
-    <v-row class="mb-8">
-        <v-col cols="12" md="4">
-            <v-card elevation="10" class="rounded-xl kpi-card overflow-hidden bg-pink-lighten-5 border-pink">
-                <v-card-text class="pa-5">
-                    <div class="d-flex align-center justify-space-between">
-                        <div>
-                            <span class="text-overline text-success font-weight-bold">Clientes Totales</span>
-                            <h2 class="text-h3 font-weight-black mt-1 text-pink-darken-2">{{ stats.totalCustomers }}</h2>
+        <v-row class="mb-8">
+            <v-col cols="12" md="4">
+                <v-card elevation="10" class="rounded-xl kpi-card overflow-hidden bg-pink-lighten-5 border-pink">
+                    <v-card-text class="pa-5">
+                        <div class="d-flex align-center justify-space-between">
+                            <div>
+                                <span class="text-overline text-success font-weight-bold">Clientes Totales</span>
+                                <h2 class="text-h3 font-weight-black mt-1 text-pink-darken-2">{{ stats.totalCustomers }}</h2>
+                            </div>
+                            <v-avatar color="white" size="64" elevation="2">
+                                <v-icon color="success" size="32">mdi-account-heart</v-icon>
+                            </v-avatar>
                         </div>
-                        <v-avatar color="white" size="64" elevation="2">
-                            <v-icon color="success" size="32">mdi-account-heart</v-icon>
-                        </v-avatar>
-                    </div>
-                    <div class="mt-4 text-caption text-pink-darken-1 font-weight-medium">
-                        <v-icon start size="16">mdi-trending-up</v-icon> Crecimiento acumulado
-                    </div>
-                </v-card-text>
-            </v-card>
-        </v-col>
-    </v-row>
+                        <div class="mt-4 text-caption text-pink-darken-1 font-weight-medium">
+                            <v-icon start size="16">mdi-trending-up</v-icon> Crecimiento acumulado
+                        </div>
+                    </v-card-text>
+                </v-card>
+            </v-col>
+        </v-row>
+    </template>
 
     <!-- <v-row class="mt-4">
         <v-col cols="12">

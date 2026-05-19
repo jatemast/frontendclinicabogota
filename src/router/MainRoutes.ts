@@ -33,7 +33,8 @@ const MainRoutes = {
           component: () => import('@/views/Customers/Customers.vue'),
           meta: {
             requiresAuth: true,
-            module: 'Clientes'
+            module: 'Clientes',
+            masterOnly: true
           }
         },
         {
@@ -42,16 +43,18 @@ const MainRoutes = {
           component: () => import('@/views/Customers/Add.vue'),
           meta: {
             requiresAuth: true,
-            module: 'Clientes'
+            module: 'Clientes',
+            masterOnly: true
           }
         },
-        {  
+        {
           name: 'CustomersEdt',
           path: '/customers-edt/:id',
           component: () => import('@/views/Customers/Edt.vue'),
           meta: {
             requiresAuth: true,
-            module: 'Clientes'
+            module: 'Clientes',
+            masterOnly: true
           }
         },
 

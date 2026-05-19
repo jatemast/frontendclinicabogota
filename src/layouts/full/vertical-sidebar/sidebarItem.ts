@@ -87,6 +87,7 @@ const sidebarItem: menu[] = [
     BgColor: 'primary',
     to: "/customers",
     module: "Clientes",
+    masterOnly: true
   },
 
   { header: 'Procedimientos' },

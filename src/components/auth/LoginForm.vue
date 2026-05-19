@@ -48,8 +48,13 @@ const handleLogin = async () => {
             const expiration = Date.now() + response.data.expires_in * 1000;
             localStorage.setItem('token_expiration', expiration.toString());
             localStorage.setItem('is_logged_in', 'true');
-            localStorage.setItem('id_business', response.data.id_business); 
+            localStorage.setItem('id_business', response.data.id_business);
             localStorage.setItem('user_display', response.data.tx_username);
+            
+            // Guardar token de acceso
+            if (response.data.access_token) {
+                localStorage.setItem('access_token', response.data.access_token);
+            }
             
             // SaaS Admin
             localStorage.setItem('is_master', response.data.is_master ? 'true' : 'false');
