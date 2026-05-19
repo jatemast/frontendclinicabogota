@@ -1,16 +1,20 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import axios from 'axios';
 import { useNotification } from '@/utils/useNotification';
 import UiParentCard from '@/components/shared/UiParentCard.vue';
+import Swal from 'sweetalert2';
 
 const { notify } = useNotification();
 const loading = ref(false);
 const tenants = ref([]);
 const API_BASE = import.meta.env.VITE_API_URL;
 const dialog = ref(false);
+const isRecycleBin = ref(false); // Toggle to show deleted tenants
+const search = ref(''); // Real-time search
 
 const form = ref({
+    id: null,
     tx_name: '',
     tx_owner: '',
     tx_owner_email: '',
@@ -21,27 +25,59 @@ const form = ref({
     tx_logo: null as File | null
 });
 
-const page = ref({ title: 'Empresas (Tenants)' });
-const breadcrumbs = ref([
-    { text: 'Dashboard', disabled: false, href: '/dashboard' },
-    { text: 'SaaS Admin', disabled: true, href: '#' },
-    { text: 'Empresas', disabled: true, href: '#' }
-]);
+const isEditing = computed(() => form.value.id !== null);
+const page = computed(() => ({ title: isRecycleBin.value ? 'Papelera de Reciclaje' : 'Empresas (Tenants)' }));
 
 const fetchTenants = async () => {
     loading.value = true;
     try {
+        console.log('🔄 Fetching tenants...');
         const response = await axios.get(`${API_BASE}api/saas/businesses`);
+        console.log('📦 API Response:', response.data);
         if (response.data.status) {
-            tenants.value = response.data.data;
+            const allTenants = response.data.data;
+            console.log('📋 All tenants from API:', allTenants);
+            if (isRecycleBin.value) {
+                tenants.value = allTenants.filter((t: any) => t.is_deleted == 1);
+            } else {
+                tenants.value = allTenants.filter((t: any) => t.is_deleted == 0);
+            }
+            console.log('✅ Tenants asignados:', tenants.value);
+            console.log('🔢 Cantidad:', tenants.value.length);
         } else {
             notify('error', response.data.msg);
         }
     } catch (error) {
+        console.error('❌ Error en fetchTenants:', error);
         notify('error', 'Error al cargar empresas');
     } finally {
         loading.value = false;
     }
+};
+
+const toggleRecycleBin = () => {
+    isRecycleBin.value = !isRecycleBin.value;
+    fetchTenants();
+};
+
+const openAddModal = () => {
+    form.value = { id: null, tx_name: '', tx_owner: '', tx_owner_email: '', tx_owner_phone: '', tx_address: '', date_validity: '', admin_password: '', tx_logo: null };
+    dialog.value = true;
+};
+
+const openEditModal = (tenant: any) => {
+    form.value = {
+        id: tenant.id,
+        tx_name: tenant.tx_name,
+        tx_owner: tenant.tx_owner,
+        tx_owner_email: tenant.tx_owner_email,
+        tx_owner_phone: tenant.tx_owner_phone,
+        tx_address: tenant.tx_address,
+        date_validity: tenant.date_validity,
+        admin_password: '', // Leave blank unless they want to change
+        tx_logo: null
+    };
+    dialog.value = true;
 };
 
 const saveTenant = async () => {
@@ -59,21 +95,15 @@ const saveTenant = async () => {
             }
         });
 
-        const response = await axios.post(`${API_BASE}api/saas/businesses`, formData, {
+        const url = isEditing.value ? `${API_BASE}api/saas/businesses/${form.value.id}` : `${API_BASE}api/saas/businesses`;
+        const response = await axios.post(url, formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
         });
+        
         if (response.data.status) {
             notify('success', response.data.msg);
             dialog.value = false;
             fetchTenants();
-            // reset form
-            Object.keys(form.value).forEach(key => {
-                if (key === 'tx_logo') {
-                    form.value[key] = null;
-                } else {
-                    form.value[key as keyof typeof form.value] = '' as any;
-                }
-            });
         } else {
             notify('error', response.data.msg);
         }
@@ -84,55 +114,228 @@ const saveTenant = async () => {
     }
 };
 
+const softDeleteTenant = async (tenant: any) => {
+    const result = await Swal.fire({
+        title: '¿Mover a la papelera?',
+        text: `La empresa "${tenant.tx_name}" podrá ser restaurada posteriormente.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Sí, mover a papelera',
+        cancelButtonText: 'Cancelar'
+    });
+
+    if (result.isConfirmed) {
+        try {
+            const res = await axios.delete(`${API_BASE}api/saas/businesses/${tenant.id}`);
+            if (res.data.status) {
+                Swal.fire('¡Eliminado!', res.data.msg, 'success');
+                fetchTenants();
+            }
+        } catch (error) {
+            notify('error', 'Hubo un problema al procesar la solicitud');
+        }
+    }
+};
+
+const restoreTenant = async (tenant: any) => {
+    const result = await Swal.fire({
+        title: '¿Restaurar empresa?',
+        text: `La empresa "${tenant.tx_name}" volverá a estar activa.`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#28a745',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Sí, restaurar',
+        cancelButtonText: 'Cancelar'
+    });
+
+    if (result.isConfirmed) {
+        try {
+            const res = await axios.post(`${API_BASE}api/saas/businesses/${tenant.id}/restore`);
+            if (res.data.status) {
+                Swal.fire('¡Restaurada!', res.data.msg, 'success');
+                fetchTenants();
+            }
+        } catch (error) {
+            notify('error', 'Hubo un problema al restaurar');
+        }
+    }
+};
+
+const forceDeleteTenant = async (tenant: any) => {
+    const result = await Swal.fire({
+        title: '¿Eliminar permanentemente?',
+        text: `¡ATENCIÓN! La empresa "${tenant.tx_name}" será borrada físicamente de la base de datos junto con toda su información. Esta acción NO se puede deshacer.`,
+        icon: 'error',
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'ELIMINAR DEFINITIVAMENTE',
+        cancelButtonText: 'Cancelar'
+    });
+
+    if (result.isConfirmed) {
+        try {
+            const res = await axios.delete(`${API_BASE}api/saas/businesses/${tenant.id}/force`);
+            if (res.data.status) {
+                Swal.fire('Borrado', res.data.msg, 'success');
+                fetchTenants();
+            }
+        } catch (error) {
+            notify('error', 'Hubo un problema con la eliminación permanente');
+        }
+    }
+};
+
+const impersonateTenant = async (tenant: any) => {
+    const result = await Swal.fire({
+        title: `Ver como ${tenant.tx_name}`,
+        text: `Vas a ingresar al sistema como administrador de esta empresa. Podrás regresar al modo Master en cualquier momento.`,
+        icon: 'info',
+        showCancelButton: true,
+        confirmButtonColor: '#17a2b8',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Entrar como cliente',
+        cancelButtonText: 'Cancelar'
+    });
+
+    if (result.isConfirmed) {
+        try {
+            const res = await axios.post(`${API_BASE}api/saas/impersonate/${tenant.id}`);
+            if (res.data.status) {
+                const currentToken = localStorage.getItem('access_token');
+                // Guardar el token maestro para poder volver
+                localStorage.setItem('master_token', currentToken as string);
+                
+                // Reemplazar la sesión actual
+                localStorage.setItem('access_token', res.data.access_token);
+                localStorage.setItem('id_business', tenant.id);
+                localStorage.setItem('is_master', '0'); // Ya no eres master en la sesión actual
+                
+                Swal.fire('Cambiando de Modo...', '', 'success');
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 1000);
+            }
+        } catch (error) {
+            notify('error', 'No se pudo iniciar la impersonación');
+        }
+    }
+};
+
 onMounted(() => {
     fetchTenants();
 });
 </script>
 
 <template>
-    <div class="mb-4 text-h5 font-weight-bold">
-        {{ page.title }}
+    <div class="d-flex justify-space-between align-center mb-4">
+        <div class="text-h5 font-weight-bold">
+            {{ page.title }}
+        </div>
+        <div>
+            <v-btn 
+                :color="isRecycleBin ? 'primary' : 'error'" 
+                :prepend-icon="isRecycleBin ? 'mdi-arrow-left' : 'mdi-delete'" 
+                variant="outlined" 
+                class="mr-2"
+                @click="toggleRecycleBin"
+            >
+                {{ isRecycleBin ? 'Ver Empresas Activas' : 'Papelera de Reciclaje' }}
+            </v-btn>
+            <v-btn color="primary" prepend-icon="mdi-plus" @click="openAddModal" v-if="!isRecycleBin">
+                Nueva Empresa
+            </v-btn>
+        </div>
     </div>
 
     <v-row>
         <v-col cols="12">
-            <UiParentCard title="Lista de Clientes">
+            <UiParentCard title="Administración de Clientes">
+                <!-- Buscador rápido -->
                 <template v-slot:action>
-                    <v-btn color="primary" @click="dialog = true">Nueva Empresa</v-btn>
+                    <v-text-field
+                        v-model="search"
+                        append-inner-icon="mdi-magnify"
+                        label="Buscar cliente..."
+                        single-line
+                        hide-details
+                        variant="outlined"
+                        density="compact"
+                        style="max-width: 300px;"
+                    ></v-text-field>
                 </template>
 
-                <v-table>
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Empresa</th>
-                            <th>Propietario</th>
-                            <th>Email</th>
-                            <th>Válido Hasta</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="tenant in tenants" :key="tenant.id">
-                            <td>{{ tenant.id }}</td>
-                            <td>{{ tenant.tx_name }}</td>
-                            <td>{{ tenant.tx_owner }}</td>
-                            <td>{{ tenant.tx_owner_email }}</td>
-                            <td>{{ tenant.date_validity }}</td>
-                            <td>
-                                <!-- Botones de acción futuros -->
-                                <v-btn size="small" color="primary" variant="text" icon="mdi-pencil"></v-btn>
-                            </td>
-                        </tr>
-                    </tbody>
-                </v-table>
+                <v-data-table
+                    :headers="[
+                        { title: 'ID', align: 'start', key: 'id' },
+                        { title: 'Empresa', align: 'start', key: 'tx_name' },
+                        { title: 'Propietario', align: 'start', key: 'tx_owner' },
+                        { title: 'Admin Login', align: 'start', key: 'tx_username' },
+                        { title: 'Válido Hasta', align: 'start', key: 'date_validity' },
+                        { title: 'Estado', align: 'center', key: 'is_deleted' },
+                        { title: 'Acciones', align: 'end', key: 'actions', sortable: false }
+                    ]"
+                    :items="tenants"
+                    :search="search"
+                    class="elevation-0"
+                    :loading="loading"
+                    loading-text="Cargando empresas..."
+                    no-data-text="No hay empresas registradas"
+                >
+                    <template v-slot:item.tx_name="{ item }">
+                        <div class="d-flex align-center">
+                            <v-avatar size="32" class="mr-2" color="grey-lighten-3">
+                                <v-img v-if="item?.raw?.tx_logo" :src="item?.raw?.tx_logo"></v-img>
+                                <span v-else>{{ item?.raw?.tx_name?.charAt(0) }}</span>
+                            </v-avatar>
+                            <div>
+                                <div class="font-weight-medium">{{ item?.raw?.tx_name }}</div>
+                                <div class="text-caption text-medium-emphasis">{{ item?.raw?.admin_email }}</div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <template v-slot:item.is_deleted="{ item }">
+                        <v-chip v-if="item?.raw?.is_deleted == 1" color="error" size="small" variant="flat">
+                            Eliminado
+                        </v-chip>
+                        <v-chip v-else color="success" size="small" variant="flat">
+                            Activo
+                        </v-chip>
+                    </template>
+
+                    <template v-slot:item.actions="{ item }">
+                        <v-menu location="start">
+                            <template v-slot:activator="{ props }">
+                                <v-btn icon="mdi-dots-vertical" variant="text" size="small" v-bind="props"></v-btn>
+                            </template>
+                            <v-list density="compact" nav>
+                                <template v-if="!isRecycleBin">
+                                    <v-list-item prepend-icon="mdi-eye-outline" title="Ver como Cliente" @click="impersonateTenant(item?.raw)"></v-list-item>
+                                    <v-list-item prepend-icon="mdi-pencil-outline" title="Editar / Actualizar" @click="openEditModal(item?.raw)"></v-list-item>
+                                    <v-divider></v-divider>
+                                    <v-list-item prepend-icon="mdi-delete-outline" base-color="error" title="Mover a Papelera" @click="softDeleteTenant(item?.raw)"></v-list-item>
+                                </template>
+                                <template v-else>
+                                    <v-list-item prepend-icon="mdi-restore" base-color="success" title="Restaurar Empresa" @click="restoreTenant(item?.raw)"></v-list-item>
+                                    <v-divider></v-divider>
+                                    <v-list-item prepend-icon="mdi-delete-forever" base-color="error" title="Eliminar Permanentemente" @click="forceDeleteTenant(item?.raw)"></v-list-item>
+                                </template>
+                            </v-list>
+                        </v-menu>
+                    </template>
+                </v-data-table>
             </UiParentCard>
         </v-col>
     </v-row>
 
+    <!-- Modal Formulario -->
     <v-dialog v-model="dialog" max-width="600">
         <v-card>
-            <v-card-title>Registrar Nueva Empresa</v-card-title>
+            <v-card-title>{{ isEditing ? 'Actualizar Empresa' : 'Registrar Nueva Empresa' }}</v-card-title>
             <v-card-text>
                 <v-row>
                     <v-col cols="12" md="6">
@@ -154,7 +357,7 @@ onMounted(() => {
                         <v-text-field v-model="form.date_validity" type="date" label="Válido Hasta" variant="outlined"></v-text-field>
                     </v-col>
                     <v-col cols="12" md="6">
-                        <v-text-field v-model="form.admin_password" label="Contraseña del Admin" variant="outlined"></v-text-field>
+                        <v-text-field v-model="form.admin_password" :label="isEditing ? 'Nueva Contraseña (Opcional)' : 'Contraseña del Admin'" variant="outlined"></v-text-field>
                     </v-col>
                     <v-col cols="12">
                         <v-file-input 

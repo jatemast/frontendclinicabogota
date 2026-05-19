@@ -13,6 +13,11 @@ import { userPermissions, refreshPermissions } from '@/utils/permissions';
 const { lgAndUp } = useDisplay();
 const sDrawer = ref(true);
 const isLoading = ref(true);
+const isImpersonating = ref(false);
+
+const checkImpersonation = () => {
+    isImpersonating.value = !!localStorage.getItem('master_token');
+};
 
 // Lógica para detectar el scroll
 const scrollContainer = useTemplateRef<HTMLElement>('scrollContainer');
@@ -28,10 +33,22 @@ const checkScroll = () => {
 };
 
 onMounted(async () => {
+    checkImpersonation();
     await refreshPermissions(); 
     isLoading.value = false;
     setTimeout(checkScroll, 500); // Verificación inicial
 });
+
+const returnToMaster = () => {
+    const masterToken = localStorage.getItem('master_token');
+    if (masterToken) {
+        localStorage.setItem('access_token', masterToken);
+        localStorage.removeItem('master_token');
+        localStorage.setItem('is_master', 'true');
+        localStorage.setItem('id_business', '9999');
+        window.location.href = '/';
+    }
+};
 
 const filteredMenu = computed(() => {
     const result = [];
@@ -128,6 +145,28 @@ const filteredMenu = computed(() => {
     </v-navigation-drawer>
 
     <div class="container verticalLayout">
+        <v-alert
+            v-if="isImpersonating"
+            color="warning"
+            variant="flat"
+            class="text-center rounded-0 font-weight-bold"
+            density="compact"
+        >
+            <div class="d-flex align-center justify-center">
+                <v-icon class="mr-2">mdi-incognito</v-icon>
+                <span>ESTÁS EN MODO CLIENTE (IMPERSONACIÓN)</span>
+                <v-btn 
+                    size="small" 
+                    color="black" 
+                    variant="outlined" 
+                    class="ml-4" 
+                    @click="returnToMaster"
+                >
+                    Volver a MASTER
+                </v-btn>
+            </div>
+        </v-alert>
+
         <div class="maxWidth">
             <v-app-bar elevation="0" height="75" color="transparent" flat class="modern-app-bar">
                 <div class="d-flex align-center justify-space-between w-100 px-6">

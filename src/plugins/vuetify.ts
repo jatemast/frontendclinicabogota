@@ -2,12 +2,16 @@ import { createVuetify } from 'vuetify';
 import '@mdi/font/css/materialdesignicons.css';
 import * as components from 'vuetify/components';
 import * as directives from 'vuetify/directives';
+import * as labsComponents from 'vuetify/labs/components';
 import { BLUE_THEME } from '@/theme/LightTheme';
 import { DARK_THEME } from '@/theme/DarkTheme';
 import { aliases, mdi } from 'vuetify/iconsets/mdi';
 
 export default createVuetify({
-  components,
+  components: {
+    ...components,
+    ...labsComponents,
+  },
   directives,
 
   icons: {

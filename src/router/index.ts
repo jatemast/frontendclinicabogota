@@ -53,7 +53,9 @@ router.beforeEach(async (to, from, next) => {
     // 2. LOGICA PARA RUTAS DE STAFF (isClient: false o undefined)
     if (!isClientRoute) {
       if (to.meta.masterOnly) {
-        if (localStorage.getItem('is_master') !== 'true') {
+        const isMaster = localStorage.getItem('is_master');
+        // Acepta 'true' (booleano) o '1' (numérico) como master
+        if (isMaster !== 'true' && isMaster !== '1') {
           notify('error', 'Access denied. Master only.');
           return next('/dashboard');
         }
