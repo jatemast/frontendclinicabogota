@@ -50,6 +50,14 @@ const handleLogin = async () => {
             localStorage.setItem('is_logged_in', 'true');
             localStorage.setItem('id_business', response.data.id_business); 
             localStorage.setItem('user_display', response.data.tx_username);
+            
+            // SaaS Admin
+            localStorage.setItem('is_master', response.data.is_master ? 'true' : 'false');
+            if (response.data.tx_photo) {
+                localStorage.setItem('user_photo', response.data.tx_photo);
+            } else {
+                localStorage.removeItem('user_photo');
+            }
 
             router.push('/dashboard');
         } else {

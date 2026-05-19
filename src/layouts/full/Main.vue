@@ -36,14 +36,21 @@ onMounted(async () => {
 const filteredMenu = computed(() => {
     const result = [];
     const items = sidebarItems;
+    const isMaster = localStorage.getItem('is_master') === 'true';
+
     for (let i = 0; i < items.length; i++) {
         const item = items[i];
+        
+        if (item.masterOnly && !isMaster) continue;
+
         if (item.header) {
             let hasVisibleChildren = false;
             for (let j = i + 1; j < items.length; j++) {
                 const nextItem = items[j];
                 if (nextItem.header) break;
-                const isItemVisible = !nextItem.module || userPermissions.value.includes(nextItem.module);
+                if (nextItem.masterOnly && !isMaster) continue;
+                
+                const isItemVisible = (!nextItem.module || userPermissions.value.includes(nextItem.module)) || nextItem.masterOnly;
                 if (isItemVisible) {
                     hasVisibleChildren = true;
                     break;
@@ -51,7 +58,7 @@ const filteredMenu = computed(() => {
             }
             if (hasVisibleChildren) result.push(item);
         } else {
-            const isVisible = !item.module || userPermissions.value.includes(item.module);
+            const isVisible = (!item.module || userPermissions.value.includes(item.module)) || item.masterOnly;
             if (isVisible) result.push(item);
         }
     }

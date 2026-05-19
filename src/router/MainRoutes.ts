@@ -218,6 +218,26 @@ const MainRoutes = {
           }
         },
 
+        {
+          name: 'SaasTenants',
+          path: '/saas/tenants',
+          component: () => import('@/views/saas/TenantList.vue'),
+          meta: {
+            requiresAuth: true,
+            masterOnly: true
+          }
+        },
+        
+        {
+          name: 'SaasMasters',
+          path: '/saas/masters',
+          component: () => import('@/views/saas/MasterList.vue'),
+          meta: {
+            requiresAuth: true,
+            masterOnly: true
+          }
+        },
+
     ]
 
 };

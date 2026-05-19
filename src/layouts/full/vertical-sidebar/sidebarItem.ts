@@ -23,6 +23,7 @@ export interface menu {
   disabled?: boolean;
   type?: string;
   subCaption?: string;
+  masterOnly?: boolean;
 }
 
 const sidebarItem: menu[] = [
@@ -32,6 +33,22 @@ const sidebarItem: menu[] = [
     BgColor: 'primary',
     to: '/dashboard',
     // module: "Dashboard",
+  },
+
+  { header: 'SaaS Admin', masterOnly: true },
+  {
+    title: 'Empresas / Clientes',
+    icon: HierarchyIcon,
+    BgColor: 'primary',
+    to: '/saas/tenants',
+    masterOnly: true
+  },
+  {
+    title: 'Gestionar Masters',
+    icon: ShieldLockIcon,
+    BgColor: 'primary',
+    to: '/saas/masters',
+    masterOnly: true
   },
 
   { header: 'Cotizaciones' },

@@ -27,6 +27,9 @@ const logout = async () => {
     notify('info', 'Sesión cerrada exitosamente');
     router.push('/');
 };
+
+const userPhoto = localStorage.getItem('user_photo');
+const userPhotoUrl = userPhoto ? `${import.meta.env.VITE_API_URL}${userPhoto}` : '';
 </script>
 
 <template>
@@ -36,8 +39,9 @@ const logout = async () => {
     <v-menu :close-on-content-click="false">
         <template v-slot:activator="{ props }">
             <v-btn class="" variant="text" v-bind="props" icon>
-                <v-avatar size="35">
-                    <img src="@/assets/images/profile/user-1.jpg" height="35" alt="user" />
+                <v-avatar size="35" color="primary">
+                    <img v-if="userPhotoUrl" :src="userPhotoUrl" height="35" alt="user" style="object-fit: cover;" />
+                    <UserIcon v-else stroke-width="1.5" size="20" color="white"/>
                 </v-avatar>
             </v-btn>
         </template>
