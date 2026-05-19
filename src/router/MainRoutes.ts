@@ -230,6 +230,15 @@ const MainRoutes = {
             masterOnly: true
           }
         },
+        {
+          name: 'SaasTenantDetail',
+          path: '/saas/tenants/:id',
+          component: () => import('@/views/saas/TenantDetail.vue'),
+          meta: {
+            requiresAuth: true,
+            masterOnly: true
+          }
+        },
         
         {
           name: 'SaasMasters',

@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
+import { useRouter } from 'vue-router';
 import axios from 'axios';
 import { useNotification } from '@/utils/useNotification';
 import UiParentCard from '@/components/shared/UiParentCard.vue';
 import Swal from 'sweetalert2';
+
+const router = useRouter();
 
 const { notify } = useNotification();
 const loading = ref(false);
@@ -189,6 +192,10 @@ const forceDeleteTenant = async (tenant: any) => {
     }
 };
 
+const viewTenantDetail = (tenant: any) => {
+    router.push(`/saas/tenants/${tenant.id}`);
+};
+
 const impersonateTenant = async (tenant: any) => {
     const result = await Swal.fire({
         title: `Ver como ${tenant.tx_name}`,
@@ -314,6 +321,7 @@ onMounted(() => {
                             </template>
                             <v-list density="compact" nav>
                                 <template v-if="!isRecycleBin">
+                                    <v-list-item prepend-icon="mdi-file-document-outline" title="Ver Información Completa" @click="viewTenantDetail(item?.raw)"></v-list-item>
                                     <v-list-item prepend-icon="mdi-eye-outline" title="Ver como Cliente" @click="impersonateTenant(item?.raw)"></v-list-item>
                                     <v-list-item prepend-icon="mdi-pencil-outline" title="Editar / Actualizar" @click="openEditModal(item?.raw)"></v-list-item>
                                     <v-divider></v-divider>
