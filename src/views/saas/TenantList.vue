@@ -6,6 +6,12 @@ import { useNotification } from '@/utils/useNotification';
 import UiParentCard from '@/components/shared/UiParentCard.vue';
 import Swal from 'sweetalert2';
 
+interface Module {
+    id: string | number;
+    tx_name: string;
+    tx_module: string;
+}
+
 const router = useRouter();
 
 const { notify } = useNotification();
@@ -15,6 +21,35 @@ const API_BASE = import.meta.env.VITE_API_URL;
 const dialog = ref(false);
 const isRecycleBin = ref(false); // Toggle to show deleted tenants
 const search = ref(''); // Real-time search
+
+// Módulos disponibles para asignar permisos
+const modules = ref<Module[]>([]);
+const selectedModules = ref<number[]>([]);
+const loadingModules = ref(false);
+
+// Agrupar módulos por tx_module (ej: Gestión, Reportes, etc.)
+const groupedModules = computed(() => {
+    return modules.value.reduce((acc, item) => {
+        const group = item.tx_module || 'Otros';
+        if (!acc[group]) acc[group] = [];
+        acc[group].push(item);
+        return acc;
+    }, {} as Record<string, Module[]>);
+});
+
+const isGroupSelected = (groupItems: Module[]) => {
+    return groupItems.every(item => selectedModules.value.includes(Number(item.id)));
+};
+
+const toggleGroup = (groupItems: Module[]) => {
+    const ids = groupItems.map(item => Number(item.id));
+    if (isGroupSelected(groupItems)) {
+        selectedModules.value = selectedModules.value.filter(id => !ids.includes(id));
+    } else {
+        const newIds = ids.filter(id => !selectedModules.value.includes(id));
+        selectedModules.value.push(...newIds);
+    }
+};
 
 const form = ref({
     id: null,
@@ -63,8 +98,25 @@ const toggleRecycleBin = () => {
     fetchTenants();
 };
 
-const openAddModal = () => {
+const fetchModules = async () => {
+    loadingModules.value = true;
+    try {
+        const res = await axios.get(`${API_BASE}api/saas/modules`);
+        if (res.data.status) {
+            modules.value = res.data.data || [];
+        }
+    } catch (error) {
+        console.error('Error al cargar módulos:', error);
+    } finally {
+        loadingModules.value = false;
+    }
+};
+
+const openAddModal = async () => {
     form.value = { id: null, tx_name: '', tx_owner: '', tx_owner_email: '', tx_owner_phone: '', tx_address: '', date_validity: '', admin_password: '', tx_logo: null };
+    selectedModules.value = [];
+    // Cargar módulos disponibles
+    await fetchModules();
     dialog.value = true;
 };
 
@@ -97,6 +149,11 @@ const saveTenant = async () => {
                 }
             }
         });
+
+        // Agregar módulos seleccionados como JSON string (para FormData)
+        if (selectedModules.value.length > 0) {
+            formData.append('id_modules', JSON.stringify(selectedModules.value));
+        }
 
         const url = isEditing.value ? `${API_BASE}api/saas/businesses/${form.value.id}` : `${API_BASE}api/saas/businesses`;
         const response = await axios.post(url, formData, {
@@ -341,7 +398,7 @@ onMounted(() => {
     </v-row>
 
     <!-- Modal Formulario -->
-    <v-dialog v-model="dialog" max-width="600">
+    <v-dialog v-model="dialog" max-width="750">
         <v-card>
             <v-card-title>{{ isEditing ? 'Actualizar Empresa' : 'Registrar Nueva Empresa' }}</v-card-title>
             <v-card-text>
@@ -368,14 +425,61 @@ onMounted(() => {
                         <v-text-field v-model="form.admin_password" :label="isEditing ? 'Nueva Contraseña (Opcional)' : 'Contraseña del Admin'" variant="outlined"></v-text-field>
                     </v-col>
                     <v-col cols="12">
-                        <v-file-input 
-                            v-model="form.tx_logo" 
-                            accept="image/png, image/jpeg, image/jpg" 
-                            label="Logo de la Empresa (Opcional)" 
-                            variant="outlined" 
+                        <v-file-input
+                            v-model="form.tx_logo"
+                            accept="image/png, image/jpeg, image/jpg"
+                            label="Logo de la Empresa (Opcional)"
+                            variant="outlined"
                             prepend-icon="mdi-camera"
                             show-size
                         ></v-file-input>
+                    </v-col>
+
+                    <!-- Selector de Módulos (solo en creación) -->
+                    <v-col cols="12" v-if="!isEditing">
+                        <v-divider class="mb-3"></v-divider>
+                        <div class="text-subtitle-1 font-weight-bold mb-2">
+                            Módulos del Sistema
+                            <v-chip size="small" color="primary" class="ml-2">
+                                {{ selectedModules.length }} seleccionados
+                            </v-chip>
+                        </div>
+                        <div class="text-caption text-medium-emphasis mb-3">
+                            Selecciona los módulos a los que el cliente tendrá acceso
+                        </div>
+                        <v-progress-linear v-if="loadingModules" indeterminate color="primary" class="mb-3"></v-progress-linear>
+                        <div v-else-if="modules.length === 0" class="text-caption text-medium-emphasis">
+                            No hay módulos disponibles
+                        </div>
+                        <v-card v-else variant="outlined" class="pa-3">
+                            <div v-for="(groupItems, groupName) in groupedModules" :key="groupName" class="mb-2">
+                                <div class="d-flex align-center mb-1">
+                                    <v-switch
+                                        :model-value="isGroupSelected(groupItems)"
+                                        @update:model-value="toggleGroup(groupItems)"
+                                        :label="groupName"
+                                        density="compact"
+                                        hide-details
+                                        color="primary"
+                                        class="mt-0 pt-0"
+                                        style="flex: 1;"
+                                    ></v-switch>
+                                </div>
+                                <div class="d-flex flex-wrap ml-4">
+                                    <div v-for="mod in groupItems" :key="mod.id" class="mr-4 mb-1">
+                                        <v-checkbox
+                                            v-model="selectedModules"
+                                            :value="Number(mod.id)"
+                                            :label="mod.tx_name"
+                                            density="compact"
+                                            hide-details
+                                            color="primary"
+                                            class="mt-0 pt-0"
+                                        ></v-checkbox>
+                                    </div>
+                                </div>
+                            </div>
+                        </v-card>
                     </v-col>
                 </v-row>
             </v-card-text>
