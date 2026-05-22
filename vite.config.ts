@@ -15,6 +15,9 @@ export default defineConfig({
             styles: { configFile: 'src/scss/variables.scss' }
         })
     ],
+    define: {
+        __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: 'false'
+    },
     // CONFIGURACIÓN DE SERVIDOR PARA HTTPS Y RED LOCAL
     // server: {
     //     host: true, // Escuchar en 192.168.31.100

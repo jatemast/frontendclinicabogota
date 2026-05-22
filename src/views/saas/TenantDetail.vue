@@ -154,6 +154,66 @@ const isExpired = (date: string) => {
     return new Date(date) < new Date();
 };
 
+const softDeleteTenant = async () => {
+    if (!tenant.value) return;
+    const result = await Swal.fire({
+        title: '¿Mover a la papelera?',
+        text: `La empresa "${tenant.value.tx_name}" podrá ser restaurada posteriormente.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Sí, mover a papelera',
+        cancelButtonText: 'Cancelar'
+    });
+
+    if (result.isConfirmed) {
+        try {
+            const res = await axios.delete(`${API_BASE}api/saas/businesses/${tenantId.value}`);
+            if (res.data.status) {
+                Swal.fire('¡Eliminado!', res.data.msg, 'success');
+                goBack();
+            }
+        } catch (error) {
+            notify('error', 'Hubo un problema al procesar la solicitud');
+        }
+    }
+};
+
+const impersonateTenant = async () => {
+    if (!tenant.value) return;
+    const result = await Swal.fire({
+        title: `Ver como ${tenant.value.tx_name}`,
+        text: `Vas a ingresar al sistema como administrador de esta empresa. Podrás regresar al modo Master en cualquier momento.`,
+        icon: 'info',
+        showCancelButton: true,
+        confirmButtonColor: '#17a2b8',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Entrar como cliente',
+        cancelButtonText: 'Cancelar'
+    });
+
+    if (result.isConfirmed) {
+        try {
+            const res = await axios.post(`${API_BASE}api/saas/impersonate/${tenantId.value}`);
+            if (res.data.status) {
+                const currentToken = localStorage.getItem('access_token');
+                localStorage.setItem('master_token', currentToken as string);
+                localStorage.setItem('access_token', res.data.access_token);
+                localStorage.setItem('id_business', tenantId.value.toString());
+                localStorage.setItem('is_master', '0');
+
+                Swal.fire('Cambiando de Modo...', '', 'success');
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 1000);
+            }
+        } catch (error) {
+            notify('error', 'No se pudo iniciar la impersonación');
+        }
+    }
+};
+
 onMounted(() => {
     fetchTenantDetail();
 });
@@ -164,13 +224,33 @@ onMounted(() => {
         <!-- Header -->
         <div class="d-flex align-center mb-4">
             <v-btn icon="mdi-arrow-left" variant="text" class="mr-2" @click="goBack"></v-btn>
-            <div>
+            <div class="flex-grow-1">
                 <div class="text-h5 font-weight-bold" v-if="tenant">
                     {{ tenant.tx_name }}
                 </div>
                 <div class="text-caption text-medium-emphasis" v-if="tenant">
                     ID: {{ tenant.id }} • Creado: {{ formatDate(tenant.date_add) }}
                 </div>
+            </div>
+            <!-- Acciones rápidas -->
+            <div v-if="tenant">
+                <v-btn
+                    color="info"
+                    variant="outlined"
+                    prepend-icon="mdi-eye-outline"
+                    class="mr-2"
+                    @click="impersonateTenant"
+                >
+                    Ver como Cliente
+                </v-btn>
+                <v-btn
+                    color="error"
+                    variant="outlined"
+                    prepend-icon="mdi-delete-outline"
+                    @click="softDeleteTenant"
+                >
+                    Mover a Papelera
+                </v-btn>
             </div>
         </div>
 

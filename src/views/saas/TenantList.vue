@@ -120,7 +120,11 @@ const openAddModal = async () => {
     dialog.value = true;
 };
 
-const openEditModal = (tenant: any) => {
+const openEditModal = async (tenant: any) => {
+    if (!tenant || !tenant.id) {
+        notify('error', 'No se pudo identificar la empresa seleccionada');
+        return;
+    }
     form.value = {
         id: tenant.id,
         tx_name: tenant.tx_name,
@@ -132,7 +136,19 @@ const openEditModal = (tenant: any) => {
         admin_password: '', // Leave blank unless they want to change
         tx_logo: null
     };
+    selectedModules.value = [];
+    // Abrir el modal inmediatamente
     dialog.value = true;
+    // Cargar módulos disponibles y los permisos actuales del tenant en segundo plano
+    fetchModules();
+    try {
+        const res = await axios.get(`${API_BASE}api/saas/businesses/${tenant.id}/permissions`);
+        if (res.data.status) {
+            selectedModules.value = res.data.data || [];
+        }
+    } catch (error) {
+        console.error('Error al cargar permisos del tenant:', error);
+    }
 };
 
 const saveTenant = async () => {
@@ -175,9 +191,13 @@ const saveTenant = async () => {
 };
 
 const softDeleteTenant = async (tenant: any) => {
+    if (!tenant || !tenant.id) {
+        notify('error', 'No se pudo identificar la empresa seleccionada');
+        return;
+    }
     const result = await Swal.fire({
         title: '¿Mover a la papelera?',
-        text: `La empresa "${tenant.tx_name}" podrá ser restaurada posteriormente.`,
+        text: `La empresa "${tenant.tx_name || 'Sin nombre'}" podrá ser restaurada posteriormente.`,
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#d33',
@@ -200,9 +220,13 @@ const softDeleteTenant = async (tenant: any) => {
 };
 
 const restoreTenant = async (tenant: any) => {
+    if (!tenant || !tenant.id) {
+        notify('error', 'No se pudo identificar la empresa seleccionada');
+        return;
+    }
     const result = await Swal.fire({
         title: '¿Restaurar empresa?',
-        text: `La empresa "${tenant.tx_name}" volverá a estar activa.`,
+        text: `La empresa "${tenant.tx_name || 'Sin nombre'}" volverá a estar activa.`,
         icon: 'question',
         showCancelButton: true,
         confirmButtonColor: '#28a745',
@@ -225,9 +249,13 @@ const restoreTenant = async (tenant: any) => {
 };
 
 const forceDeleteTenant = async (tenant: any) => {
+    if (!tenant || !tenant.id) {
+        notify('error', 'No se pudo identificar la empresa seleccionada');
+        return;
+    }
     const result = await Swal.fire({
         title: '¿Eliminar permanentemente?',
-        text: `¡ATENCIÓN! La empresa "${tenant.tx_name}" será borrada físicamente de la base de datos junto con toda su información. Esta acción NO se puede deshacer.`,
+        text: `¡ATENCIÓN! La empresa "${tenant.tx_name || 'Sin nombre'}" será borrada físicamente de la base de datos junto con toda su información. Esta acción NO se puede deshacer.`,
         icon: 'error',
         showCancelButton: true,
         confirmButtonColor: '#dc3545',
@@ -250,12 +278,20 @@ const forceDeleteTenant = async (tenant: any) => {
 };
 
 const viewTenantDetail = (tenant: any) => {
+    if (!tenant || !tenant.id) {
+        notify('error', 'No se pudo identificar la empresa seleccionada');
+        return;
+    }
     router.push(`/saas/tenants/${tenant.id}`);
 };
 
 const impersonateTenant = async (tenant: any) => {
+    if (!tenant || !tenant.id) {
+        notify('error', 'No se pudo identificar la empresa seleccionada');
+        return;
+    }
     const result = await Swal.fire({
-        title: `Ver como ${tenant.tx_name}`,
+        title: `Ver como ${tenant.tx_name || 'Sin nombre'}`,
         text: `Vas a ingresar al sistema como administrador de esta empresa. Podrás regresar al modo Master en cualquier momento.`,
         icon: 'info',
         showCancelButton: true,
@@ -378,16 +414,16 @@ onMounted(() => {
                             </template>
                             <v-list density="compact" nav>
                                 <template v-if="!isRecycleBin">
-                                    <v-list-item prepend-icon="mdi-file-document-outline" title="Ver Información Completa" @click="viewTenantDetail(item?.raw)"></v-list-item>
-                                    <v-list-item prepend-icon="mdi-eye-outline" title="Ver como Cliente" @click="impersonateTenant(item?.raw)"></v-list-item>
-                                    <v-list-item prepend-icon="mdi-pencil-outline" title="Editar / Actualizar" @click="openEditModal(item?.raw)"></v-list-item>
+                                    <v-list-item prepend-icon="mdi-file-document-outline" title="Ver Información Completa" @click="() => viewTenantDetail(item?.raw)"></v-list-item>
+                                    <v-list-item prepend-icon="mdi-eye-outline" title="Ver como Cliente" @click="() => impersonateTenant(item?.raw)"></v-list-item>
+                                    <v-list-item prepend-icon="mdi-pencil-outline" title="Editar / Actualizar" @click="() => openEditModal(item?.raw)"></v-list-item>
                                     <v-divider></v-divider>
-                                    <v-list-item prepend-icon="mdi-delete-outline" base-color="error" title="Mover a Papelera" @click="softDeleteTenant(item?.raw)"></v-list-item>
+                                    <v-list-item prepend-icon="mdi-delete-outline" base-color="error" title="Mover a Papelera" @click="() => softDeleteTenant(item?.raw)"></v-list-item>
                                 </template>
                                 <template v-else>
-                                    <v-list-item prepend-icon="mdi-restore" base-color="success" title="Restaurar Empresa" @click="restoreTenant(item?.raw)"></v-list-item>
+                                    <v-list-item prepend-icon="mdi-restore" base-color="success" title="Restaurar Empresa" @click="() => restoreTenant(item?.raw)"></v-list-item>
                                     <v-divider></v-divider>
-                                    <v-list-item prepend-icon="mdi-delete-forever" base-color="error" title="Eliminar Permanentemente" @click="forceDeleteTenant(item?.raw)"></v-list-item>
+                                    <v-list-item prepend-icon="mdi-delete-forever" base-color="error" title="Eliminar Permanentemente" @click="() => forceDeleteTenant(item?.raw)"></v-list-item>
                                 </template>
                             </v-list>
                         </v-menu>
@@ -398,7 +434,7 @@ onMounted(() => {
     </v-row>
 
     <!-- Modal Formulario -->
-    <v-dialog v-model="dialog" max-width="750">
+    <v-dialog v-model="dialog" max-width="750" scrollable>
         <v-card>
             <v-card-title>{{ isEditing ? 'Actualizar Empresa' : 'Registrar Nueva Empresa' }}</v-card-title>
             <v-card-text>
@@ -435,8 +471,8 @@ onMounted(() => {
                         ></v-file-input>
                     </v-col>
 
-                    <!-- Selector de Módulos (solo en creación) -->
-                    <v-col cols="12" v-if="!isEditing">
+                    <!-- Selector de Módulos -->
+                    <v-col cols="12">
                         <v-divider class="mb-3"></v-divider>
                         <div class="text-subtitle-1 font-weight-bold mb-2">
                             Módulos del Sistema

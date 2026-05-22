@@ -33,8 +33,7 @@ const MainRoutes = {
           component: () => import('@/views/Customers/Customers.vue'),
           meta: {
             requiresAuth: true,
-            module: 'Clientes',
-            masterOnly: true
+            module: 'Clientes'
           }
         },
         {
@@ -43,8 +42,7 @@ const MainRoutes = {
           component: () => import('@/views/Customers/Add.vue'),
           meta: {
             requiresAuth: true,
-            module: 'Clientes',
-            masterOnly: true
+            module: 'Clientes'
           }
         },
         {
@@ -53,8 +51,7 @@ const MainRoutes = {
           component: () => import('@/views/Customers/Edt.vue'),
           meta: {
             requiresAuth: true,
-            module: 'Clientes',
-            masterOnly: true
+            module: 'Clientes'
           }
         },
 
