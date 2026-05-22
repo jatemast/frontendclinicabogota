@@ -4,7 +4,7 @@ import AuthRoutes from './AuthRoutes';
 import AuthCustomerRoutes from './AuthCustomer';
 import ClientRoutes from './ClientRoutes';
 import { useNotification } from '@/utils/useNotification';
-import { userPermissions, refreshPermissions, isMaster } from '@/utils/permissions';
+import { userPermissions, refreshPermissions, isMaster, isImpersonating } from '@/utils/permissions';
 import { API } from '@/api/endpoints';
 import axios from 'axios';
 
@@ -84,6 +84,12 @@ router.beforeEach(async (to, from, next) => {
         await refreshPermissions();
         
         if (userPermissions.value.includes(moduleName)) {
+          return next();
+        }
+
+        // --- MODO PERSONIFICACIÓN: si estamos personificando y no hay permisos cargados,
+        // asumir acceso completo (el backend del cliente puede no tener endpoint de permisos)
+        if (isImpersonating() && userPermissions.value.length === 0) {
           return next();
         }
 

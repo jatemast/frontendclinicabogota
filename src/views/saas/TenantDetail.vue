@@ -5,6 +5,7 @@ import axios from 'axios';
 import { useNotification } from '@/utils/useNotification';
 import UiParentCard from '@/components/shared/UiParentCard.vue';
 import Swal from 'sweetalert2';
+import { API } from '@/api/endpoints';
 
 const { notify } = useNotification();
 const route = useRoute();
@@ -218,7 +219,7 @@ const impersonateTenant = async () => {
 
     if (result.isConfirmed) {
         try {
-            const res = await axios.post(`${API_BASE}api/saas/impersonate/${tenantId.value}`);
+            const res = await axios.post(API.SAAS.IMPERSONATE(tenantId.value));
             if (res.data.status) {
                 const currentToken = localStorage.getItem('access_token');
                 localStorage.setItem('master_token', currentToken as string);

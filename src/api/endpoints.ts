@@ -95,5 +95,6 @@ export const API = {
     TENANTS: `${BASE}api/saas/tenants`,
     TENANT_DETAIL: (id: number | string) => `${BASE}api/saas/tenants/${id}`,
     MASTERS: `${BASE}api/saas/masters`,
+    IMPERSONATE: (id: number | string) => `${BASE}api/saas/impersonate/${id}`,
   },
 };

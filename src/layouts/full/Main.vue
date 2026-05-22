@@ -8,7 +8,7 @@ import Logo from './logo/Logo.vue';
 import { Menu2Icon, ChevronUpIcon, ChevronDownIcon } from 'vue-tabler-icons';
 import NotificationDD from './vertical-header/NotificationDD.vue';
 import ProfileDD from './vertical-header/ProfileDD.vue';
-import { userPermissions, refreshPermissions } from '@/utils/permissions';
+import { userPermissions, refreshPermissions, can } from '@/utils/permissions';
 
 const { lgAndUp } = useDisplay();
 const sDrawer = ref(true);
@@ -75,7 +75,8 @@ const filteredMenu = computed(() => { // Filtra los elementos del menú lateral 
                 if (nextItem.header) break;
                 if (nextItem.masterOnly && !isMaster) continue;
                 
-                const isItemVisible = (!nextItem.module || userPermissions.value.includes(nextItem.module)) || nextItem.masterOnly;
+                // Usar can() en lugar de includes() para respetar master y personificación
+                const isItemVisible = !nextItem.module || can(nextItem.module);
                 if (isItemVisible) {
                     hasVisibleChildren = true;
                     break;
@@ -83,7 +84,8 @@ const filteredMenu = computed(() => { // Filtra los elementos del menú lateral 
             }
             if (hasVisibleChildren) result.push(item);
         } else {
-            const isVisible = (!item.module || userPermissions.value.includes(item.module)) || item.masterOnly;
+            // Usar can() en lugar de includes() para respetar master y personificación
+            const isVisible = !item.module || can(item.module);
             if (isVisible) result.push(item);
         }
     }

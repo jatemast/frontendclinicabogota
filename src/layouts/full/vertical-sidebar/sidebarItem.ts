@@ -32,7 +32,6 @@ const sidebarItem: menu[] = [
     icon: LayoutDashboardIcon,
     BgColor: 'primary',
     to: '/dashboard',
-    module: "Dashboard",
   },
 
   { header: 'SaaS Admin', masterOnly: true },

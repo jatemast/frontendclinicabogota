@@ -5,6 +5,7 @@ import axios from 'axios';
 import { useNotification } from '@/utils/useNotification';
 import UiParentCard from '@/components/shared/UiParentCard.vue';
 import Swal from 'sweetalert2';
+import { API } from '@/api/endpoints';
 
 interface Module {
     id: string | number;
@@ -339,7 +340,7 @@ const impersonateTenant = async (tenantInput: any) => {
 
     if (result.isConfirmed) {
         try {
-            const res = await axios.post(`${API_BASE}api/saas/impersonate/${tenant.id}`);
+            const res = await axios.post(API.SAAS.IMPERSONATE(tenant.id));
             if (res.data.status) {
                 const currentToken = localStorage.getItem('access_token');
                 // Guardar el token maestro para poder volver
