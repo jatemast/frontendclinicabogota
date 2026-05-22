@@ -59,26 +59,49 @@ const fetchTenantDetail = async () => {
 const updateTenant = async () => {
     saving.value = true;
     try {
-        const formData = new FormData();
-        const fields: (keyof typeof editForm.value)[] = [
-            'tx_name', 'tx_owner', 'tx_owner_email', 'tx_owner_phone',
-            'tx_address', 'date_validity', 'admin_password'
-        ];
-        
-        fields.forEach(key => {
-            const val = editForm.value[key];
-            if (val !== null && val !== '') {
-                formData.append(key, val as string);
+        const hasFile = editForm.value.tx_logo !== null && editForm.value.tx_logo !== undefined;
+        let response;
+        const url = `${API_BASE}api/saas/businesses/${tenantId.value}`;
+
+        if (hasFile) {
+            // Si hay archivo, usar FormData
+            const formData = new FormData();
+            const fields: (keyof typeof editForm.value)[] = [
+                'tx_name', 'tx_owner', 'tx_owner_email', 'tx_owner_phone',
+                'tx_address', 'date_validity', 'admin_password'
+            ];
+            
+            fields.forEach(key => {
+                const val = editForm.value[key];
+                if (val !== null && val !== '') {
+                    formData.append(key, val as string);
+                }
+            });
+
+            if (editForm.value.tx_logo) {
+                formData.append('tx_logo', editForm.value.tx_logo);
             }
-        });
 
-        if (editForm.value.tx_logo) {
-            formData.append('tx_logo', editForm.value.tx_logo);
+            response = await axios.post(url, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+        } else {
+            // Sin archivo, enviar como JSON
+            const payload: Record<string, any> = {};
+            const fields: (keyof typeof editForm.value)[] = [
+                'tx_name', 'tx_owner', 'tx_owner_email', 'tx_owner_phone',
+                'tx_address', 'date_validity', 'admin_password'
+            ];
+            
+            fields.forEach(key => {
+                const val = editForm.value[key];
+                if (val !== null && val !== '') {
+                    payload[key] = val;
+                }
+            });
+
+            response = await axios.post(url, payload);
         }
-
-        const response = await axios.post(`${API_BASE}api/saas/businesses/${tenantId.value}`, formData, {
-            headers: { 'Content-Type': 'multipart/form-data' }
-        });
 
         if (response.data.status) {
             notify('success', response.data.msg);

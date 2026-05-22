@@ -168,27 +168,44 @@ const openEditModal = async (tenantInput: any) => {
 const saveTenant = async () => {
     loading.value = true;
     try {
-        const formData = new FormData();
-        Object.keys(form.value).forEach(key => {
-            const val = form.value[key as keyof typeof form.value];
-            if (val !== null && val !== '') {
-                if (key === 'tx_logo' && Array.isArray(val) && val.length > 0) {
-                    formData.append(key, val[0]);
-                } else if (key !== 'tx_logo') {
-                    formData.append(key, val as string);
-                }
-            }
-        });
-
-        // Agregar módulos seleccionados como JSON string (para FormData)
-        if (selectedModules.value.length > 0) {
-            formData.append('id_modules', JSON.stringify(selectedModules.value));
-        }
-
+        const hasFile = form.value.tx_logo && Array.isArray(form.value.tx_logo) && form.value.tx_logo.length > 0;
+        
+        let response;
         const url = isEditing.value ? `${API_BASE}api/saas/businesses/${form.value.id}` : `${API_BASE}api/saas/businesses`;
-        const response = await axios.post(url, formData, {
-            headers: { 'Content-Type': 'multipart/form-data' }
-        });
+
+        if (hasFile) {
+            // Si hay archivo, usar FormData
+            const formData = new FormData();
+            Object.keys(form.value).forEach(key => {
+                const val = form.value[key as keyof typeof form.value];
+                if (val !== null && val !== '') {
+                    if (key === 'tx_logo' && Array.isArray(val) && val.length > 0) {
+                        formData.append(key, val[0]);
+                    } else if (key !== 'tx_logo') {
+                        formData.append(key, val as string);
+                    }
+                }
+            });
+            if (selectedModules.value.length > 0) {
+                formData.append('id_modules', JSON.stringify(selectedModules.value));
+            }
+            response = await axios.post(url, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+        } else {
+            // Sin archivo, enviar como JSON
+            const payload: Record<string, any> = {};
+            Object.keys(form.value).forEach(key => {
+                const val = form.value[key as keyof typeof form.value];
+                if (val !== null && val !== '' && key !== 'tx_logo') {
+                    payload[key] = val;
+                }
+            });
+            if (selectedModules.value.length > 0) {
+                payload.id_modules = selectedModules.value;
+            }
+            response = await axios.post(url, payload);
+        }
         
         if (response.data.status) {
             notify('success', response.data.msg);
