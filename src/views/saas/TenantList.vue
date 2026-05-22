@@ -120,7 +120,21 @@ const openAddModal = async () => {
     dialog.value = true;
 };
 
-const openEditModal = async (tenant: any) => {
+const extractTenantData = (item: any): any => {
+    // En Vuetify 3, el slot item.actions expone { item: rawData, index, columns }
+    // También puede llegar directamente el rawData
+    if (!item) return null;
+    // Si tiene propiedad 'item' (wrapper de Vuetify), extraer los datos
+    if (item.item && (item.item.id !== undefined)) return item.item;
+    // Si tiene propiedad 'raw' (otra forma del wrapper)
+    if (item.raw && (item.raw.id !== undefined)) return item.raw;
+    // Si ya es el objeto directamente
+    if (item.id !== undefined) return item;
+    return null;
+};
+
+const openEditModal = async (tenantInput: any) => {
+    const tenant = extractTenantData(tenantInput);
     if (!tenant || !tenant.id) {
         notify('error', 'No se pudo identificar la empresa seleccionada');
         return;
@@ -190,7 +204,8 @@ const saveTenant = async () => {
     }
 };
 
-const softDeleteTenant = async (tenant: any) => {
+const softDeleteTenant = async (tenantInput: any) => {
+    const tenant = extractTenantData(tenantInput);
     if (!tenant || !tenant.id) {
         notify('error', 'No se pudo identificar la empresa seleccionada');
         return;
@@ -219,7 +234,8 @@ const softDeleteTenant = async (tenant: any) => {
     }
 };
 
-const restoreTenant = async (tenant: any) => {
+const restoreTenant = async (tenantInput: any) => {
+    const tenant = extractTenantData(tenantInput);
     if (!tenant || !tenant.id) {
         notify('error', 'No se pudo identificar la empresa seleccionada');
         return;
@@ -248,7 +264,8 @@ const restoreTenant = async (tenant: any) => {
     }
 };
 
-const forceDeleteTenant = async (tenant: any) => {
+const forceDeleteTenant = async (tenantInput: any) => {
+    const tenant = extractTenantData(tenantInput);
     if (!tenant || !tenant.id) {
         notify('error', 'No se pudo identificar la empresa seleccionada');
         return;
@@ -277,7 +294,8 @@ const forceDeleteTenant = async (tenant: any) => {
     }
 };
 
-const viewTenantDetail = (tenant: any) => {
+const viewTenantDetail = (tenantInput: any) => {
+    const tenant = extractTenantData(tenantInput);
     if (!tenant || !tenant.id) {
         notify('error', 'No se pudo identificar la empresa seleccionada');
         return;
@@ -285,7 +303,8 @@ const viewTenantDetail = (tenant: any) => {
     router.push(`/saas/tenants/${tenant.id}`);
 };
 
-const impersonateTenant = async (tenant: any) => {
+const impersonateTenant = async (tenantInput: any) => {
+    const tenant = extractTenantData(tenantInput);
     if (!tenant || !tenant.id) {
         notify('error', 'No se pudo identificar la empresa seleccionada');
         return;
@@ -414,16 +433,16 @@ onMounted(() => {
                             </template>
                             <v-list density="compact" nav>
                                 <template v-if="!isRecycleBin">
-                                    <v-list-item prepend-icon="mdi-file-document-outline" title="Ver Información Completa" @click="() => viewTenantDetail(item?.raw)"></v-list-item>
-                                    <v-list-item prepend-icon="mdi-eye-outline" title="Ver como Cliente" @click="() => impersonateTenant(item?.raw)"></v-list-item>
-                                    <v-list-item prepend-icon="mdi-pencil-outline" title="Editar / Actualizar" @click="() => openEditModal(item?.raw)"></v-list-item>
+                                    <v-list-item prepend-icon="mdi-file-document-outline" title="Ver Información Completa" @click="viewTenantDetail(item)"></v-list-item>
+                                    <v-list-item prepend-icon="mdi-eye-outline" title="Ver como Cliente" @click="impersonateTenant(item)"></v-list-item>
+                                    <v-list-item prepend-icon="mdi-pencil-outline" title="Editar / Actualizar" @click="openEditModal(item)"></v-list-item>
                                     <v-divider></v-divider>
-                                    <v-list-item prepend-icon="mdi-delete-outline" base-color="error" title="Mover a Papelera" @click="() => softDeleteTenant(item?.raw)"></v-list-item>
+                                    <v-list-item prepend-icon="mdi-delete-outline" base-color="error" title="Mover a Papelera" @click="softDeleteTenant(item)"></v-list-item>
                                 </template>
                                 <template v-else>
-                                    <v-list-item prepend-icon="mdi-restore" base-color="success" title="Restaurar Empresa" @click="() => restoreTenant(item?.raw)"></v-list-item>
+                                    <v-list-item prepend-icon="mdi-restore" base-color="success" title="Restaurar Empresa" @click="restoreTenant(item)"></v-list-item>
                                     <v-divider></v-divider>
-                                    <v-list-item prepend-icon="mdi-delete-forever" base-color="error" title="Eliminar Permanentemente" @click="() => forceDeleteTenant(item?.raw)"></v-list-item>
+                                    <v-list-item prepend-icon="mdi-delete-forever" base-color="error" title="Eliminar Permanentemente" @click="forceDeleteTenant(item)"></v-list-item>
                                 </template>
                             </v-list>
                         </v-menu>
