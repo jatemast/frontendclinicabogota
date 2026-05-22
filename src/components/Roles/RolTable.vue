@@ -52,15 +52,15 @@
                     </v-btn>
                   </template>
                   <v-list>
-                    <v-list-item @click="handleEdit(record)">
+                    <v-list-item v-if="can('Modulo de Roles')" @click="handleEdit(record)">
                       <v-list-item-title>Editar</v-list-item-title>
                     </v-list-item>
 
-                    <v-list-item @click="handlePermissions(record.id)">
+                    <v-list-item v-if="can('Modulo de Roles')" @click="handlePermissions(record.id)">
                       <v-list-item-title>Permisos</v-list-item-title>
                     </v-list-item>
 
-                    <v-list-item @click="handleDelete(record.id)">
+                    <v-list-item v-if="can('Modulo de Roles')" @click="handleDelete(record.id)">
                       <v-list-item-title>Eliminar</v-list-item-title>
                     </v-list-item>
                   </v-list>
@@ -106,6 +106,8 @@ import axios from 'axios';
 import { useRealtime } from '@/utils/useRealtime';
 import { useNotification } from '@/utils/useNotification';
 import { useRouter } from 'vue-router';
+import { API } from '@/api/endpoints';
+import { can } from '@/utils/permissions';
 import UiParentCard from '../shared/UiParentCard.vue';
 import ExpandableSearch from '../shared/ExpandableSearch.vue';
 
@@ -124,9 +126,8 @@ const itemsPerPage = 10;
 const loading = ref(true);
 const { notify } = useNotification();
 const router = useRouter();
-const API_BASE = import.meta.env.VITE_API_URL;
 
-const sortKey = ref<keyof record | undefined>(undefined); 
+const sortKey = ref<keyof record | undefined>(undefined);
 const sortOrder = ref<'asc' | 'desc'>('asc');
 
 function sortBy(key: keyof record) {
@@ -146,7 +147,7 @@ function getSortIcon(key: keyof record) {
 const fetchRoles = async () => {
   try {
 
-    const res = await axios.get(`${API_BASE}api/roles/all`);
+    const res = await axios.get(API.ROLES.ALL);
     records.value = res.data.data;
 
   } catch (error) {
@@ -235,7 +236,7 @@ notify('confirm', 'Está seguro de eliminar este registro?', {
     onConfirm: async () => {
       try {
 
-        const response = await axios.post(`${import.meta.env.VITE_API_URL}/roles/del/${recordId}`);
+        const response = await axios.post(API.ROLES.DELETE(recordId));
 
         if (response.data.status === true) {
           notify('success', response.data.msg);

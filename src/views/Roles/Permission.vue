@@ -83,6 +83,7 @@ import axios from 'axios';
 import { useNotification } from '@/utils/useNotification';
 import { useRouter, useRoute } from 'vue-router';
 import { refreshPermissions } from '@/utils/permissions';
+import { API } from '@/api/endpoints';
 
 interface Module {
   id: string | number;
@@ -103,7 +104,6 @@ const isSubmitting = ref(false);
 const { notify } = useNotification();
 const router = useRouter();
 const route = useRoute();
-const API_BASE = import.meta.env.VITE_API_URL;
 
 const groupedModules = computed(() => {
   return modules.value.reduce((acc, item) => {
@@ -133,8 +133,8 @@ onMounted(async () => {
     selectedRoleId.value = Number(route.params.id);
 
     const [resModules, resPerms] = await Promise.all([
-      axios.get(`${API_BASE}api/roles/allmodules`),
-      axios.get(`${API_BASE}api/roles/allpermission/${selectedRoleId.value}`)
+      axios.get(API.ROLES.ALL_MODULES),
+      axios.get(API.ROLES.PERMISSIONS(selectedRoleId.value))
     ]);
 
     modules.value = resModules.data.data || [];
@@ -156,7 +156,7 @@ const savePermissions = async () => {
   try {
     const token = localStorage.getItem('token');
     const res = await axios.post(
-      `${API_BASE}roles/addpermission/${selectedRoleId.value}`,
+      API.ROLES.ASSIGN_PERMISSIONS(selectedRoleId.value),
       { id_modules: selectedModules.value },
       { headers: { Authorization: `Bearer ${token}` } }
     );

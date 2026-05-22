@@ -67,6 +67,7 @@ import { useRouter, useRoute } from 'vue-router';
 import UiParentCard from '@/components/shared/UiParentCard.vue';
 import axios from 'axios';
 import { useNotification } from '@/utils/useNotification';
+import { API } from '@/api/endpoints';
 import { required, onlyNumbers, notOnlySpaces } from '@/utils/validators';
 
 const router = useRouter();
@@ -86,7 +87,7 @@ onMounted(async () => {
 
   try {
     const [recordRes] = await Promise.all([
-      axios.get(`${import.meta.env.VITE_API_URL}roles/edt/${recorId}`)]);
+      axios.get(API.ROLES.EDIT(recorId))]);
 
     if (recordRes.data.status) {
       const record = recordRes.data.data;
@@ -116,7 +117,7 @@ const submit = async () => {
   isSubmitting.value = true;
 
   try {
-    const response = await axios.post(`${import.meta.env.VITE_API_URL}roles/upd/${route.params.id}`, form.value);
+    const response = await axios.post(API.ROLES.UPDATE(route.params.id), form.value);
 
     if (response.data.status) {
       notify('success', response.data.msg || 'Actualizado correctamente');

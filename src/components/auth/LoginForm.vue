@@ -3,6 +3,8 @@ import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import { useRouter } from 'vue-router';
 import { useNotification } from '@/utils/useNotification';
+import { refreshPermissions } from '@/utils/permissions';
+import { API } from '@/api/endpoints';
 
 const router = useRouter();
 const { notify } = useNotification();
@@ -10,7 +12,6 @@ const { notify } = useNotification();
 const loading = ref(false);
 const showPassword = ref(false);
 const hasCamera = ref<boolean | null>(null);
-const API_BASE = import.meta.env.VITE_API_URL;
 
 const tx_username = ref('');
 const tx_password = ref('');
@@ -37,7 +38,7 @@ const handleLogin = async () => {
     }
     loading.value = true;
     try {
-        const response = await axios.post(`${API_BASE}login`, {
+        const response = await axios.post(API.LOGIN, {
             tx_username: tx_username.value,
             tx_password: tx_password.value
         });
@@ -63,6 +64,9 @@ const handleLogin = async () => {
             } else {
                 localStorage.removeItem('user_photo');
             }
+
+            // Refrescar permisos inmediatamente después del login
+            await refreshPermissions();
 
             router.push('/dashboard');
         } else {

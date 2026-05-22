@@ -137,6 +137,7 @@ import { useRouter, useRoute } from 'vue-router';
 import UiParentCard from '@/components/shared/UiParentCard.vue';
 import axios from 'axios';
 import { useNotification } from '@/utils/useNotification';
+import { API } from '@/api/endpoints';
 import { required, email, onlyNumbers, notOnlySpaces, colombianPhone } from '@/utils/validators';
 
 const router = useRouter();
@@ -181,10 +182,10 @@ onMounted(async () => {
   try {
     // Restaurada la consulta de roles con el endpoint correcto
     const [userRes, rolesRes] = await Promise.all([
-      axios.get(`${import.meta.env.VITE_API_URL}users/edt/${userId}`, {
+      axios.get(API.USERS.EDIT(userId), {
         headers: { Authorization: `Bearer ${token}` }
       }),
-      axios.get(`${import.meta.env.VITE_API_URL}api/roles/all`, {
+      axios.get(API.ROLES.ALL, {
         headers: { Authorization: `Bearer ${token}` }
       })
     ]);
@@ -228,7 +229,7 @@ const submit = async () => {
   }
 
   try {
-    const response = await axios.post(`${import.meta.env.VITE_API_URL}users/upd/${route.params.id}`, form.value);
+    const response = await axios.post(API.USERS.UPDATE(route.params.id), form.value);
 
     if (response.data.status) {
       notify('success', response.data.msg || 'Usuario actualizado correctamente');

@@ -18,6 +18,20 @@ const toast = useToast();
 axios.defaults.withCredentials = true; 
 axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
+// Interceptor para incluir el token de autenticación en cada solicitud
+axios.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
 // Interceptor para manejar sesiones expiradas
 axios.interceptors.response.use(
   (response) => response,

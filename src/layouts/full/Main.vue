@@ -14,7 +14,7 @@ const { lgAndUp } = useDisplay();
 const sDrawer = ref(true);
 const railMode = ref(true); // Nuevo estado para controlar el modo colapsado/expandido
 const isLoading = ref(true);
-const isImpersonating = ref(false);
+const isImpersonating = ref(false); // Indica si el usuario actual está en modo de suplantación (impersonating) de un cliente.
 
 const appBarTopOffset = computed(() => {
     return isImpersonating.value ? 48 : 0; // 48px es la altura estimada de la alerta
@@ -23,7 +23,7 @@ const appBarDynamicTop = computed(() => {
     return `calc(20px + ${appBarTopOffset.value}px)`;
 });
 
-const checkImpersonation = () => {
+const checkImpersonation = () => { // Verifica si existe un 'master_token' en localStorage, lo que indica que se está suplantando a un cliente.
     isImpersonating.value = !!localStorage.getItem('master_token');
 };
 
@@ -47,18 +47,18 @@ onMounted(async () => {
     setTimeout(checkScroll, 500); // Verificación inicial
 });
 
-const returnToMaster = () => {
+const returnToMaster = () => { // Revierte el modo de suplantación, restaurando el token y el ID de negocio del usuario maestro, y recarga la página.
     const masterToken = localStorage.getItem('master_token');
     if (masterToken) {
         localStorage.setItem('access_token', masterToken);
         localStorage.removeItem('master_token');
         localStorage.setItem('is_master', 'true');
-        localStorage.setItem('id_business', '9999');
+        localStorage.setItem('id_business', '9999'); // ID especial que indica el modo MASTER.
         window.location.href = '/';
     }
 };
 
-const filteredMenu = computed(() => {
+const filteredMenu = computed(() => { // Filtra los elementos del menú lateral basándose en los permisos del usuario actual y si es el usuario maestro o un cliente suplantado.
     const result = [];
     const items = sidebarItems;
     const isMaster = localStorage.getItem('is_master') === 'true';

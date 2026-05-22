@@ -138,9 +138,10 @@ import { ref, onMounted, onUnmounted, computed } from 'vue';
 import axios from 'axios';
 import { useNotification } from '@/utils/useNotification';
 import { useRouter } from 'vue-router';
+import { API } from '@/api/endpoints';
 import UiParentCard from '../shared/UiParentCard.vue';
 import ExpandableSearch from '../shared/ExpandableSearch.vue';
-import EmptyState from '@/components/shared/EmptyState.vue'; 
+import EmptyState from '@/components/shared/EmptyState.vue';
 
 interface Record {
   id: number;
@@ -162,11 +163,10 @@ const itemsPerPage = 10;
 const loading = ref(true);
 const { notify } = useNotification();
 const router = useRouter();
-const API_BASE = import.meta.env.VITE_API_URL;
 
 const fetchUsers = async () => {
     try {
-        const res = await axios.get(`${API_BASE}api/customers/all`);
+        const res = await axios.get(API.CUSTOMERS.ALL);
         records.value = res.data.data;
     } catch (error) {
         console.error('Error cargando data en la tabla:', error);
@@ -265,7 +265,7 @@ notify('confirm', 'Está seguro de eliminar este registro?', {
         const token = localStorage.getItem('token');
 
         const response = await axios.post(
-          `${import.meta.env.VITE_API_URL}/users/del/${userId}`,
+          API.USERS.DELETE(userId),
           {},
           {
             headers: {

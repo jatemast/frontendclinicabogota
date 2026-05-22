@@ -1,9 +1,11 @@
 import { createRouter, createWebHashHistory } from 'vue-router';
 import MainRoutes from './MainRoutes';
 import AuthRoutes from './AuthRoutes';
-import AuthCustomerRoutes from './AuthCustomer'; // El que tú creaste
-import ClientRoutes from './ClientRoutes'; // El nuevo portal
+import AuthCustomerRoutes from './AuthCustomer';
+import ClientRoutes from './ClientRoutes';
 import { useNotification } from '@/utils/useNotification';
+import { userPermissions, refreshPermissions, isMaster } from '@/utils/permissions';
+import { API } from '@/api/endpoints';
 import axios from 'axios';
 
 const { notify } = useNotification();
@@ -25,7 +27,6 @@ export const router = createRouter({
 router.beforeEach(async (to, from, next) => {
 
   // Obtenemos si la ruta destino es de cliente o staff
-  // Usamos find para buscar en la jerarquía de rutas matcheadas
   const isClientRoute = to.matched.some(record => record.meta.isClient);
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
 
@@ -52,28 +53,43 @@ router.beforeEach(async (to, from, next) => {
 
     // 2. LOGICA PARA RUTAS DE STAFF (isClient: false o undefined)
     if (!isClientRoute) {
-      if (to.meta.masterOnly) {
-        const isMaster = localStorage.getItem('is_master');
-        // Acepta 'true' (booleano) o '1' (numérico) como master
-        if (isMaster !== 'true' && isMaster !== '1') {
-          notify('error', 'Access denied. Master only.');
-          return next('/dashboard');
-        }
+      // --- MASTER (SuperAdmin) tiene acceso TOTAL a TODO ---
+      if (isMaster()) {
         return next();
       }
 
-      const moduleName = to.meta.module;
-      if (moduleName) {
+      // --- Validación mejorada de masterOnly contra backend ---
+      if (to.meta.masterOnly) {
         try {
-          const res = await axios.get(`${import.meta.env.VITE_API_URL}api/users/validatepermission/${moduleName}`);
-          if (res.data.status) return next();
-          
-          notify('error', res.data.msg || 'Access denied');
-          return next('/dashboard'); 
+          const res = await axios.get(API.PERMISSIONS.VALIDATE_MASTER);
+          if (res.data.status && res.data.isMaster) {
+            return next();
+          }
+          notify('error', 'Access denied. Master only.');
+          return next('/dashboard');
         } catch (err) {
-          // Si hay error de red o 401/403, limpiar y sacar
-          return next('/');
+          notify('error', 'Access denied. Master only.');
+          return next('/dashboard');
         }
+      }
+
+      const moduleName = to.meta.module as string | undefined;
+      if (moduleName) {
+        // --- CACHÉ DE PERMISOS: primero revisar en memoria ---
+        if (userPermissions.value.includes(moduleName)) {
+          return next();
+        }
+
+        // Si no está en caché, refrescar permisos y reintentar
+        await refreshPermissions();
+        
+        if (userPermissions.value.includes(moduleName)) {
+          return next();
+        }
+
+        // Si aún no tiene permiso, denegar acceso
+        notify('error', `No tienes permiso para acceder a este módulo`);
+        return next('/dashboard');
       }
       return next();
     }
@@ -88,12 +104,11 @@ router.beforeEach(async (to, from, next) => {
     // 4. RUTAS PÚBLICAS (Logins)
     if (isAuthenticated) {
       // Si el usuario ya está logueado e intenta ir a un Login...
-      if (to.path === '/') return next('/dashboard'); 
-      if (to.path === '/login') return next('/dashboard'); 
+      if (to.path === '/') return next('/dashboard');
+      if (to.path === '/login') return next('/dashboard');
       
       if (to.path === '/customer/') return next('/portal/dashboard');
     }
     next();
   }
 });
-

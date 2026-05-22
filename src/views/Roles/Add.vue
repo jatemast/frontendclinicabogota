@@ -53,6 +53,7 @@ import { useRouter } from 'vue-router';
 import UiParentCard from '@/components/shared/UiParentCard.vue';
 import axios from 'axios';
 import { useNotification } from '@/utils/useNotification';
+import { API } from '@/api/endpoints';
 import {
   required,
   notOnlySpaces,
@@ -60,7 +61,7 @@ import {
 
 const router = useRouter();
 const formRef = ref();
-const isSubmitting = ref(false); 
+const isSubmitting = ref(false);
 
 const form = ref({
   tx_name: '',
@@ -80,7 +81,7 @@ const submit = async () => {
 
   try {
 
-    const response = await axios.post(`${import.meta.env.VITE_API_URL}roles/add`, form.value,);
+    const response = await axios.post(API.ROLES.ADD, form.value);
 
     if (response.data.status) {
       notify('success', response.data.msg || 'Guardado correctamente');

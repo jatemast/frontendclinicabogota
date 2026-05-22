@@ -11,10 +11,9 @@ const MainRoutes = {
             name: 'Dashboard',
             path: '/dashboard',
             component: () => import('@/views/dashboard/index.vue'),
-            // meta: {
-            //   requiresAuth: false,
-            //   module: 'Dashboard'
-            // }
+            meta: {
+                requiresAuth: true
+            }
         },
 
         {

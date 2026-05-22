@@ -32,7 +32,7 @@ const sidebarItem: menu[] = [
     icon: LayoutDashboardIcon,
     BgColor: 'primary',
     to: '/dashboard',
-    // module: "Dashboard",
+    module: "Dashboard",
   },
 
   { header: 'SaaS Admin', masterOnly: true },
@@ -114,7 +114,7 @@ const sidebarItem: menu[] = [
     icon: ShieldLockIcon,
     BgColor: 'primary',
     to: "/roles",
-    // module: "Roles",
+    module: "Modulo de Roles",
   },
 
   { header: 'Configuración' },

@@ -170,11 +170,12 @@ import { useRouter } from 'vue-router';
 import UiParentCard from '@/components/shared/UiParentCard.vue';
 import axios from 'axios';
 import { useNotification } from '@/utils/useNotification';
+import { API } from '@/api/endpoints';
 import { required, email, onlyNumbers, notOnlySpaces, strongPassword, matchPasswords, validUsername, colombianPhone } from '@/utils/validators';
 
 const router = useRouter();
 const formRef = ref();
-const isSubmitting = ref(false); 
+const isSubmitting = ref(false);
 const { notify } = useNotification();
 
 // Control de selección previa
@@ -232,12 +233,12 @@ const roles = ref<Rol[]>([]);
 
 onMounted(async () => {
   try {
-    const res = await axios.get(`${import.meta.env.VITE_API_URL}api/roles/all`);
+    const res = await axios.get(API.ROLES.ALL);
     
     if (Array.isArray(res.data.data)) {
       if (res.data.data.length === 0) {
         notify('error', 'No hay roles registrados en el sistema');
-        router.push('/users'); 
+        router.push('/users');
       } else {
         roles.value = res.data.data;
       }
@@ -269,7 +270,7 @@ const submit = async () => {
   try {
     const token = localStorage.getItem('token');
     const response = await axios.post(
-      `${import.meta.env.VITE_API_URL}users/add`,
+      API.USERS.ADD,
       form.value,
       { headers: { Authorization: `Bearer ${token}` } }
     );
