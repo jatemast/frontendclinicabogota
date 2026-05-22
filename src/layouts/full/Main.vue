@@ -16,6 +16,13 @@ const railMode = ref(true); // Nuevo estado para controlar el modo colapsado/exp
 const isLoading = ref(true);
 const isImpersonating = ref(false);
 
+const appBarTopOffset = computed(() => {
+    return isImpersonating.value ? 48 : 0; // 48px es la altura estimada de la alerta
+});
+const appBarDynamicTop = computed(() => {
+    return `calc(20px + ${appBarTopOffset.value}px)`;
+});
+
 const checkImpersonation = () => {
     isImpersonating.value = !!localStorage.getItem('master_token');
 };
@@ -170,7 +177,9 @@ const filteredMenu = computed(() => {
         </v-alert>
 
         <div class="maxWidth">
-            <v-app-bar elevation="0" height="75" color="transparent" flat class="modern-app-bar">
+            <v-app-bar elevation="0" height="75" color="transparent" flat class="modern-app-bar"
+                :style="{ top: appBarDynamicTop + ' !important' }"
+            >
                 <div class="d-flex align-center justify-space-between w-100 px-6">
                     <div class="d-flex align-center floating-group px-4 py-2">
                         <v-btn 
