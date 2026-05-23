@@ -30,6 +30,10 @@
               Apellido
               <v-icon v-if="sortKey === 'tx_last_name'" :icon="getSortIcon('tx_last_name')" size="16" />
             </th>
+            <th @click="sortBy('tx_username')" style="cursor: pointer">
+              Usuario
+              <v-icon v-if="sortKey === 'tx_username'" :icon="getSortIcon('tx_username')" size="16" />
+            </th>
             <th @click="sortBy('tx_phone')" style="cursor: pointer">
               Telefono
               <v-icon v-if="sortKey === 'tx_phone'" :icon="getSortIcon('tx_phone')" size="16" />
@@ -62,6 +66,7 @@
               <td>{{ user.id }}</td>
               <td>{{ user.tx_first_name }}</td>
               <td>{{ user.tx_last_name }}</td>
+              <td><b>{{ user.tx_username }}</b></td>
               <td>{{ user.tx_phone }}</td>
               <td>{{ user.tx_email }}</td>
               <td>{{ user.tx_user_type }}</td>
@@ -136,6 +141,7 @@ interface user {
   id: number;
   tx_first_name?: string;
   tx_last_name?: string;
+  tx_username?: string;
   tx_phone?: string;
   tx_email?: string;
   in_status?: number;
@@ -192,6 +198,7 @@ const filteredusers = computed(() => {
     const target = [
       v.tx_first_name?.toString().toLowerCase() ?? '',
       v.tx_last_name?.toLowerCase() ?? '',
+      v.tx_username?.toLowerCase() ?? '',
       v.tx_phone?.toLowerCase() ?? '',
       v.tx_email?.toLowerCase() ?? '',
       v.in_status?.toString().toLowerCase() ?? '',
