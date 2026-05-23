@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { RouterView } from 'vue-router';
+import { RouterView, useRoute } from 'vue-router';
 import MainView from './Main.vue';
+
+const route = useRoute();
 </script>
 
 <template>
@@ -10,7 +12,7 @@ import MainView from './Main.vue';
             <v-main>
                 <v-container fluid class="page-wrapper bg-background px-sm-5 px-4  pt-12 rounded-xl">
                     <div class="maxWidth">
-                        <RouterView />
+                        <RouterView :key="route.fullPath" />
                     </div>
                 </v-container>
             </v-main>

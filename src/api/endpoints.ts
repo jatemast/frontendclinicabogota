@@ -60,10 +60,10 @@ export const API = {
 
   // ============ COTIZACIONES ============
   QUOTES: {
-    ALL: `${BASE}api/quotes/all`,
-    ADD: `${BASE}api/quotes/add`,
-    EDIT: (id: number | string) => `${BASE}api/quotes/edt/${id}`,
-    UPDATE: (id: number | string) => `${BASE}api/quotes/upd/${id}`,
+    ALL: `${BASE}api/coty/all`,
+    ADD: `${BASE}quotes/add`,
+    EDIT: (id: number | string) => `${BASE}quotes/edt/${id}`,
+    UPDATE: (id: number | string) => `${BASE}quotes/upd/${id}`,
   },
 
   // ============ HISTORIAS CLÍNICAS ============
