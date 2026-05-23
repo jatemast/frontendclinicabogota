@@ -43,6 +43,7 @@ export const API = {
     ADD: `${BASE}api/customers/add`,
     EDIT: (id: number | string) => `${BASE}api/customers/edt/${id}`,
     UPDATE: (id: number | string) => `${BASE}api/customers/upd/${id}`,
+    DELETE: (id: number | string) => `${BASE}api/customers/del/${id}`,
   },
 
   // ============ EPS ============

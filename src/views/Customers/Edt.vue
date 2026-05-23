@@ -176,6 +176,7 @@ import CustomDatePicker from '@/components/shared/AppDatePicker.vue';
 import axios from 'axios';
 import { useNotification } from '@/utils/useNotification';
 import { required, email, onlyNumbers } from '@/utils/validators';
+import { API } from '@/api/endpoints';
 
 const router = useRouter();
 const route = useRoute();
@@ -223,7 +224,15 @@ onMounted(async () => {
 const fetchInitialData = async () => {
     try {
         // Cargar EPS
-        const resEps = await axios.get(`${import.meta.env.VITE_API_URL}api/eps/all`);
+        const token = localStorage.getItem('token') || localStorage.getItem('master_token');
+        const resEps = await axios.get(
+            API.EPS.ALL,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            }
+        );
         epsList.value = resEps.data.data;
 
         // Cargar Division Política
@@ -244,7 +253,15 @@ const fetchInitialData = async () => {
 const fetchCustomerData = async (id: any) => {
     try {
         loadingData.value = true;
-        const response = await axios.get(`${import.meta.env.VITE_API_URL}customers/edt/${id}`);
+        const token = localStorage.getItem('token') || localStorage.getItem('master_token');
+        const response = await axios.get(
+            API.CUSTOMERS.EDIT(id),
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            }
+        );
         
         if (response.data.status) {
             const d = response.data.data;
@@ -294,9 +311,15 @@ const submit = async () => {
     isSubmitting.value = true;
     try {
         const customerId = route.params.id;
+        const token = localStorage.getItem('token') || localStorage.getItem('master_token');
         const response = await axios.post(
-            `${import.meta.env.VITE_API_URL}customers/upd/${customerId}`,
-            form.value
+            API.CUSTOMERS.UPDATE(customerId),
+            form.value,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            }
         );
 
         if (response.data.status) {

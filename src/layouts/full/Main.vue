@@ -49,13 +49,17 @@ onMounted(async () => {
 
 const returnToMaster = () => { // Revierte el modo de suplantación, restaurando el token y el ID de negocio del usuario maestro, y recarga la página.
     const masterToken = localStorage.getItem('master_token');
-    if (masterToken) {
+    if (masterToken && masterToken !== 'null' && masterToken !== 'undefined') {
         localStorage.setItem('access_token', masterToken);
-        localStorage.removeItem('master_token');
-        localStorage.setItem('is_master', 'true');
-        localStorage.setItem('id_business', '9999'); // ID especial que indica el modo MASTER.
-        window.location.href = '/';
+        localStorage.setItem('token', masterToken);
+    } else {
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('token');
     }
+    localStorage.removeItem('master_token');
+    localStorage.setItem('is_master', 'true');
+    localStorage.setItem('id_business', '9999'); // ID especial que indica el modo MASTER.
+    window.location.href = '/';
 };
 
 const filteredMenu = computed(() => { // Filtra los elementos del menú lateral basándose en los permisos del usuario actual y si es el usuario maestro o un cliente suplantado.

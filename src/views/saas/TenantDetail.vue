@@ -224,6 +224,7 @@ const impersonateTenant = async () => {
                 const currentToken = localStorage.getItem('access_token');
                 localStorage.setItem('master_token', currentToken as string);
                 localStorage.setItem('access_token', res.data.access_token);
+                localStorage.setItem('token', res.data.access_token);
                 localStorage.setItem('id_business', tenantId.value.toString());
                 localStorage.setItem('is_master', '0');
 

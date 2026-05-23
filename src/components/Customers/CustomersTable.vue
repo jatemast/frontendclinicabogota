@@ -76,9 +76,14 @@
                       <v-list-item-title>Editar</v-list-item-title>
                     </v-list-item>
 
-                    <!-- <v-list-item @click="handleDelete(record.id)">
-                      <v-list-item-title>Eliminar</v-list-item-title>
-                    </v-list-item> -->
+                    <v-list-item @click="handleToggleStatus(record)">
+                      <v-list-item-title>
+                        <v-icon :color="record.in_status != 0 ? 'error' : 'success'" size="18" class="mr-1">
+                          {{ record.in_status != 0 ? 'mdi-close-circle-outline' : 'mdi-check-circle-outline' }}
+                        </v-icon>
+                        {{ record.in_status != 0 ? 'Desactivar' : 'Activar' }}
+                      </v-list-item-title>
+                    </v-list-item>
                   </v-list>
                 </v-menu>
               </td>
@@ -258,36 +263,42 @@ function handleEdit(user: Record) {
   router.push(`/customers-edt/${user.id}`);
 }
 
-async function handleDelete(userId: number) {
-notify('confirm', 'Está seguro de eliminar este registro?', {
+async function handleToggleStatus(record: Record) {
+  const newStatus = record.in_status != 0 ? 0 : 1;
+  const actionLabel = newStatus === 0 ? 'desactivar' : 'activar';
+
+  notify('confirm', `¿Está seguro de ${actionLabel} este cliente?`, {
     onConfirm: async () => {
       try {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('token') || localStorage.getItem('master_token');
 
         const response = await axios.post(
-          API.USERS.DELETE(userId),
-          {},
+          API.CUSTOMERS.UPDATE(record.id),
+          { in_status: newStatus },
           {
             headers: {
-              Authorization: `Bearer ${token}`
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json'
             }
           }
         );
 
         if (response.data.status === true) {
-          notify('success', response.data.msg);
-          records.value = records.value.filter(u => u.id !== userId);
-        } else if( response.data.status === "Expired") {
-
+          notify('success', response.data.msg || `Cliente ${actionLabel}do exitosamente`);
+          // Actualizar el registro en la lista local
+          const idx = records.value.findIndex(r => r.id === record.id);
+          if (idx !== -1) {
+            records.value[idx] = { ...records.value[idx], in_status: newStatus };
+          }
+        } else if (response.data.status === "Expired") {
           notify('error', 'Su sesión venció. Por favor inicie sesión nuevamente.');
           router.push('/login');
-
-        }else{
+        } else {
           notify('error', response.data.msg || 'Ocurrió un error.');
         }
-      } catch (error) {
+      } catch (error: any) {
+        console.error('Error detallado:', error.response?.data || error.message);
         notify('error', 'Error de conexión al servidor');
-        console.error(error);
       }
     },
     onCancel: () => {

@@ -21,8 +21,7 @@ const logout = async () => {
         console.warn('No se pudo cerrar sesión en el backend:', err);
     }
 
-    localStorage.removeItem('token');
-    localStorage.removeItem('token_expiration');
+    localStorage.clear();
 
     notify('info', 'Sesión cerrada exitosamente');
     router.push('/');

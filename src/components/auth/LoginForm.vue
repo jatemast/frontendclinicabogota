@@ -55,6 +55,7 @@ const handleLogin = async () => {
             // Guardar token de acceso
             if (response.data.access_token) {
                 localStorage.setItem('access_token', response.data.access_token);
+                localStorage.setItem('token', response.data.access_token);
             }
             
             // SaaS Admin

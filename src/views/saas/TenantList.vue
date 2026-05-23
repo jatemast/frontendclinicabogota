@@ -348,6 +348,7 @@ const impersonateTenant = async (tenantInput: any) => {
                 
                 // Reemplazar la sesión actual
                 localStorage.setItem('access_token', res.data.access_token);
+                localStorage.setItem('token', res.data.access_token);
                 localStorage.setItem('id_business', tenant.id);
                 localStorage.setItem('is_master', '0'); // Ya no eres master en la sesión actual
                 
