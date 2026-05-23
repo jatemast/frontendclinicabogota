@@ -67,6 +67,60 @@
                             <div class="text-body-2">Cotización: <strong>#{{ selectedCoty.tx_nro }}</strong> | DNI: {{ selectedCoty.tx_dni }}</div>
                         </div>
 
+                        <!-- DATOS DEL PROFESIONAL RESPONSABLE -->
+                        <div v-if="doctorData" class="doctor-info-card mb-6 pa-4 rounded-lg">
+                            <div class="d-flex align-center mb-3">
+                                <v-avatar color="primary" size="40" class="mr-3">
+                                    <v-icon color="white">mdi-doctor</v-icon>
+                                </v-avatar>
+                                <div>
+                                    <div class="text-overline text-primary">Profesional Responsable</div>
+                                    <div class="text-subtitle-1 font-weight-bold">{{ doctorData.tx_first_name }} {{ doctorData.tx_last_name }}</div>
+                                </div>
+                                <v-spacer></v-spacer>
+                                <v-chip color="primary" variant="tonal" size="small" class="font-weight-bold">
+                                    {{ doctorData.tx_user_type || 'Profesional' }}
+                                </v-chip>
+                            </div>
+                            <v-divider class="mb-3"></v-divider>
+                            <v-row dense>
+                                <v-col cols="12" sm="6">
+                                    <div class="text-caption text-grey">Cédula Profesional</div>
+                                    <div class="text-body-2 font-weight-medium">{{ doctorData.tx_document_id || '—' }}</div>
+                                </v-col>
+                                <v-col cols="12" sm="6">
+                                    <div class="text-caption text-grey">Registro Médico</div>
+                                    <div class="text-body-2 font-weight-medium">{{ doctorData.tx_medical_registration || '—' }}</div>
+                                </v-col>
+                                <v-col cols="12" sm="6">
+                                    <div class="text-caption text-grey">Especialidad</div>
+                                    <div class="text-body-2 font-weight-medium">{{ doctorData.tx_specialty || '—' }}</div>
+                                </v-col>
+                                <v-col cols="12" sm="6">
+                                    <div class="text-caption text-grey">Cargo / Rol</div>
+                                    <div class="text-body-2 font-weight-medium">{{ doctorData.tx_user_type || '—' }}</div>
+                                </v-col>
+                            </v-row>
+                            <!-- Firma del doctor -->
+                            <div v-if="doctorData.tx_signature" class="mt-3 pt-3 border-top">
+                                <div class="text-caption text-grey mb-1">Firma Digital</div>
+                                <v-img
+                                    :src="doctorData.tx_signature"
+                                    max-height="50"
+                                    max-width="200"
+                                    contain
+                                    class="rounded"
+                                ></v-img>
+                            </div>
+                            <div v-else class="mt-3 pt-3 border-top">
+                                <v-alert type="warning" variant="tonal" density="compact" rounded="lg" class="text-caption">
+                                    <v-icon start>mdi-alert-circle</v-icon>
+                                    El profesional aún no ha registrado su firma digital.
+                                    <router-link to="/users" class="text-primary font-weight-bold">Ir a configuración</router-link>
+                                </v-alert>
+                            </div>
+                        </div>
+
                         <!-- Procedimientos a realizar -->
                         <v-label class="font-weight-bold mb-2 text-primary text-uppercase">Procedimientos a realizar</v-label>
                         <div class="mb-4">
@@ -254,6 +308,7 @@ import { useRouter } from 'vue-router';
 import axios from 'axios';
 import { useNotification } from '@/utils/useNotification';
 import UiParentCard from '@/components/shared/UiParentCard.vue';
+import { API } from '@/api/endpoints';
 
 const router = useRouter();
 const { notify } = useNotification();
@@ -267,6 +322,7 @@ const cotys = ref<any[]>([]);
 const procedures = ref<any[]>([]);
 const searchCoty = ref('');
 const selectedCoty = ref<any>(null);
+const doctorData = ref<any>(null);
 
 const form = ref({
     id_coty: '',
@@ -411,8 +467,21 @@ const updateCanvasWidth = () => {
     }
 };
 
+// --- Cargar datos del doctor autenticado ---
+const fetchDoctorData = async () => {
+    try {
+        const response = await axios.get(API.USERS.ME);
+        if (response.data.status) {
+            doctorData.value = response.data.data;
+        }
+    } catch (error) {
+        console.error("Error al cargar datos del doctor", error);
+    }
+};
+
 onMounted(() => {
     fetchCotys();
+    fetchDoctorData();
     updateCanvasWidth();
     window.addEventListener('resize', updateCanvasWidth);
 });
@@ -495,6 +564,8 @@ const submitHistory = async () => {
 .coty-card { border: 2px solid transparent; cursor: pointer; transition: all 0.2s ease;  }
 .coty-card:hover { border-color: rgb(var(--v-theme-primary)); transform: translateY(-2px); }
 .selected-coty-info { background: rgba(var(--v-theme-primary), 0.05); border-left: 4px solid rgb(var(--v-theme-primary)); }
+.doctor-info-card { background: linear-gradient(135deg, #f8f9ff 0%, #eef1ff 100%); border: 1px solid #d0d5ff; border-left: 4px solid rgb(var(--v-theme-primary)); }
+.doctor-info-card .border-top { border-top: 1px solid #e0e0e0; }
 .btn-gradient { background: linear-gradient(45deg, rgb(var(--v-theme-primary)), #4db6ac) !important; color: white !important; }
 
 .signature-container {

@@ -15,6 +15,8 @@ export const API = {
     EDIT: (id: number | string) => `${BASE}api/users/edt/${id}`,
     UPDATE: (id: number | string) => `${BASE}api/users/upd/${id}`,
     DELETE: (id: number | string) => `${BASE}api/users/del/${id}`,
+    UPLOAD_SIGNATURE: `${BASE}api/users/uploadsignature`,
+    ME: `${BASE}api/users/me`,
   },
 
   // ============ PERMISOS ============
@@ -72,11 +74,35 @@ export const API = {
     GET: (id: number | string) => `${BASE}api/medicalhistory/get/${id}`,
     ADD: `${BASE}api/medicalhistory/add`,
     UPDATE: `${BASE}api/medicalhistory/upd`,
+    APPROVE: (id: number | string) => `${BASE}api/medicalhistory/approve/${id}`,
+    CLOSE: (id: number | string) => `${BASE}api/medicalhistory/close/${id}`,
+    TIMELINE: (id: number | string) => `${BASE}api/medicalhistory/timeline/${id}`,
     HABITS: {
       ALL: (id: number | string) => `${BASE}api/medicalhistory/habits/all/${id}`,
       ADD: `${BASE}api/medicalhistory/habits/add`,
       DELETE: (id: number | string) => `${BASE}api/medicalhistory/habits/del/${id}`,
     },
+  },
+
+  // ============ PRECLÍNICA ============
+  PRECLINICA: {
+    ALL: `${BASE}api/preclinica/all`,
+    GET: (id: number | string) => `${BASE}api/preclinica/get/${id}`,
+    ADD: `${BASE}api/preclinica/add`,
+    UPDATE: `${BASE}api/preclinica/upd`,
+    DELETE: (id: number | string) => `${BASE}api/preclinica/del/${id}`,
+    BY_HISTORY: (id: number | string) => `${BASE}api/preclinica/byhistory/${id}`,
+  },
+
+  // ============ POSTOPERATORIOS (Postclínica) ============
+  POSTCLINICA: {
+    ALL: `${BASE}api/postclinica/all`,
+    GET: (id: number | string) => `${BASE}api/postclinica/get/${id}`,
+    ADD: `${BASE}api/postclinica/add`,
+    UPDATE: `${BASE}api/postclinica/upd`,
+    CLOSE: (id: number | string) => `${BASE}api/postclinica/close/${id}`,
+    DELETE: (id: number | string) => `${BASE}api/postclinica/del/${id}`,
+    BY_HISTORY: (id: number | string) => `${BASE}api/postclinica/byhistory/${id}`,
   },
 
   // ============ DASHBOARD ============
