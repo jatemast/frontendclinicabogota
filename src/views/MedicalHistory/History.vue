@@ -935,11 +935,140 @@
                         <div v-if="event.description" class="text-caption text-medium-emphasis mb-1">
                             {{ event.description }}
                         </div>
-                        <div v-if="event.user" class="text-caption text-grey">
-                            <v-icon start size="12">mdi-account</v-icon> {{ event.user }}
+                        <div v-if="event.user_name" class="text-caption text-grey mb-2">
+                            <v-icon start size="12">mdi-account</v-icon> {{ event.user_name }}
+                            <v-chip v-if="event.user_type" size="x-small" variant="tonal" class="ml-1" color="primary">
+                                {{ event.user_type }}
+                            </v-chip>
+                        </div>
+                        <div class="d-flex">
+                            <v-btn
+                                size="x-small"
+                                color="info"
+                                variant="tonal"
+                                prepend-icon="mdi-eye"
+                                @click="viewTimelineDetail(event)"
+                            >
+                                Ver más
+                            </v-btn>
                         </div>
                     </v-timeline-item>
                 </v-timeline>
+                <!-- Dialog para ver detalle del evento de timeline -->
+                <v-dialog v-model="showTimelineDetail" max-width="600">
+                    <v-card rounded="xl">
+                        <v-card-title class="d-flex align-center pa-4 pb-0">
+                            <v-icon start :color="timelineEvent?.color || 'info'" size="28">{{ timelineEvent?.icon || 'mdi-information' }}</v-icon>
+                            <span class="text-h6 font-weight-bold">Detalle del Evento</span>
+                            <v-spacer></v-spacer>
+                            <v-btn icon variant="text" size="small" @click="showTimelineDetail = false">
+                                <v-icon>mdi-close</v-icon>
+                            </v-btn>
+                        </v-card-title>
+
+                        <v-card-text class="pa-4" v-if="timelineEvent">
+                            <v-row>
+                                <v-col cols="12" sm="6">
+                                    <div class="text-caption text-grey mb-1">Tipo de evento</div>
+                                    <v-chip size="x-small" :color="timelineEvent.color" variant="tonal">
+                                        <v-icon start size="12">{{ timelineEvent.icon }}</v-icon>
+                                        {{ timelineEvent.title }}
+                                    </v-chip>
+                                </v-col>
+                                <v-col cols="12" sm="6">
+                                    <div class="text-caption text-grey mb-1">Fecha y hora</div>
+                                    <div class="text-body-2">
+                                        <v-icon start size="14">mdi-calendar-clock</v-icon>
+                                        {{ formatDateTime(timelineEvent.date) }}
+                                    </div>
+                                </v-col>
+                            </v-row>
+
+                            <v-divider class="my-3"></v-divider>
+
+                            <div class="text-caption text-grey mb-1">Descripción</div>
+                            <v-card variant="outlined" rounded="lg" class="pa-3 bg-grey-lighten-4 mb-3">
+                                <p class="text-body-2">{{ timelineEvent.description || 'Sin descripción' }}</p>
+                            </v-card>
+
+                            <v-divider class="my-3"></v-divider>
+
+                            <div class="text-subtitle-2 font-weight-bold mb-2">
+                                <v-icon start size="16">mdi-account-details</v-icon> Usuario que realizó la acción
+                            </div>
+                            <v-row>
+                                <v-col cols="12" sm="6">
+                                    <div class="text-caption text-grey mb-1">Nombre</div>
+                                    <div class="text-body-2">
+                                        <v-icon start size="14" color="primary">mdi-account</v-icon>
+                                        {{ timelineEvent.user_name || '—' }}
+                                    </div>
+                                </v-col>
+                                <v-col cols="12" sm="6">
+                                    <div class="text-caption text-grey mb-1">Correo electrónico</div>
+                                    <div class="text-body-2">
+                                        <v-icon start size="14" color="primary">mdi-email</v-icon>
+                                        {{ timelineEvent.user_email || '—' }}
+                                    </div>
+                                </v-col>
+                            </v-row>
+                            <v-row v-if="timelineEvent.user_type">
+                                <v-col cols="12">
+                                    <div class="text-caption text-grey mb-1">Tipo de usuario</div>
+                                    <v-chip size="x-small" color="primary" variant="tonal">
+                                        <v-icon start size="12">mdi-shield-account</v-icon>
+                                        {{ timelineEvent.user_type }}
+                                    </v-chip>
+                                </v-col>
+                            </v-row>
+
+                            <!-- Metadata adicional si existe -->
+                            <template v-if="timelineEvent.metadata">
+                                <v-divider class="my-3"></v-divider>
+                                <div class="text-subtitle-2 font-weight-bold mb-2">
+                                    <v-icon start size="16">mdi-information-outline</v-icon> Información adicional
+                                </div>
+                                <v-card variant="outlined" rounded="lg" class="pa-3 bg-grey-lighten-4">
+                                    <pre class="text-caption mb-0" style="white-space: pre-wrap;">{{ JSON.stringify(timelineEvent.metadata, null, 2) }}</pre>
+                                </v-card>
+                            </template>
+
+                            <!-- Fotos si el evento es un postoperatorio -->
+                            <template v-if="timelineEvent.photos && timelineEvent.photos.length > 0">
+                                <v-divider class="my-3"></v-divider>
+                                <div class="text-caption text-grey mb-1">Fotos del postoperatorio ({{ timelineEvent.photos.length }})</div>
+                                <v-row dense>
+                                    <v-col v-for="(photo, pIdx) in timelineEvent.photos" :key="pIdx" cols="4" sm="3">
+                                        <v-img
+                                            :src="photo"
+                                            max-height="100"
+                                            cover
+                                            class="rounded-lg border cursor-pointer"
+                                            @click="openPhotoPreview(photo)"
+                                        ></v-img>
+                                    </v-col>
+                                </v-row>
+                            </template>
+
+                            <!-- Estado del postoperatorio si aplica -->
+                            <template v-if="timelineEvent.status">
+                                <v-divider class="my-3"></v-divider>
+                                <div class="text-caption text-grey mb-1">Estado del postoperatorio</div>
+                                <v-chip
+                                    :color="timelineEvent.status === 'Abierto' ? 'success' : 'grey'"
+                                    size="x-small"
+                                    variant="tonal"
+                                >
+                                    {{ timelineEvent.status }}
+                                </v-chip>
+                            </template>
+                        </v-card-text>
+
+                        <v-card-actions class="pa-4 pt-0 justify-end">
+                            <v-btn variant="text" color="grey-darken-1" @click="showTimelineDetail = false">Cerrar</v-btn>
+                        </v-card-actions>
+                    </v-card>
+                </v-dialog>
             </v-window-item>
 
             </v-window>
@@ -1267,6 +1396,8 @@ const postopForm = ref({
 // ========== ESTADOS DE TIMELINE (Regla 8) ==========
 const timeline = ref([]);
 const loadingTimeline = ref(false);
+const showTimelineDetail = ref(false);
+const timelineEvent = ref(null);
 
 // ========== ESTADOS DE VALIDACIÓN Y CIERRE (Reglas 5 y 6) ==========
 const showApproveDialog = ref(false);
@@ -1692,6 +1823,11 @@ const fetchTimeline = async () => {
     } finally {
         loadingTimeline.value = false;
     }
+};
+
+const viewTimelineDetail = (event) => {
+    timelineEvent.value = event;
+    showTimelineDetail.value = true;
 };
 
 // ========== FUNCIONES DE VALIDACIÓN MÉDICA (Regla 5) ==========
