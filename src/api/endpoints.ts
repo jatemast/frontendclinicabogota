@@ -82,6 +82,13 @@ export const API = {
       ADD: `${BASE}api/medicalhistory/habits/add`,
       DELETE: (id: number | string) => `${BASE}api/medicalhistory/habits/del/${id}`,
     },
+    PRESCRIPTIONS: {
+      ALL: (id: number | string) => `${BASE}api/medicalhistory/prescriptions/all/${id}`,
+      ADD: `${BASE}api/medicalhistory/prescriptions/add`,
+      DELETE: (id: number | string) => `${BASE}api/medicalhistory/prescriptions/del/${id}`,
+    },
+    PRESCRIPTION_PDF: (id: number | string) => `${BASE}api/medicalhistory/prescription-pdf/${id}`,
+    PDF: (id: number | string) => `${BASE}api/medicalhistory/pdf/${id}`,
   },
 
   // ============ PRECLÍNICA ============

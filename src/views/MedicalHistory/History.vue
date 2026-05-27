@@ -49,6 +49,17 @@
                                 >
                                     Cerrar HC
                                 </v-btn>
+                                <!-- Botón Descargar PDF -->
+                                <v-btn
+                                    color="warning"
+                                    variant="tonal"
+                                    size="small"
+                                    prepend-icon="mdi-file-pdf-box"
+                                    @click="downloadPdf"
+                                    :loading="downloadingPdf"
+                                >
+                                    PDF
+                                </v-btn>
                                 <v-btn icon color="primary" variant="tonal" @click="router.back()">
                                     <v-icon>mdi-arrow-left</v-icon>
                                 </v-btn>
@@ -73,6 +84,9 @@
                 <v-tab v-if="hasPermission('Historia Clinica Diagnostico')" value="plan" class="text-none">Plan Quirurgico</v-tab>
                 <v-tab v-if="hasPermission('Historia Clinica Aptitud')" value="aptitud" class="text-none">Aptitud</v-tab>
                 <v-tab v-if="hasPermission('Historia Clinica Habitos')" value="habitos" class="text-none">Hábitos</v-tab>
+                <v-tab value="receta" class="text-none">
+                    <v-icon start>mdi-prescription</v-icon> Receta Médica
+                </v-tab>
                 <v-tab value="postoperatorios" class="text-none">
                     <v-badge :content="postopsCount" :model-value="postopsCount > 0" color="primary" dot>
                         <v-icon start>mdi-bandage</v-icon> Postoperatorios
@@ -517,6 +531,170 @@
                         <p class="text-subtitle-1 text-grey-darken-1 mt-2">No hay hábitos registrados para este paciente.</p>
                     </v-sheet>
                 </div>
+            </v-window-item>
+
+            <!-- ========== PESTAÑA DE RECETA MÉDICA ========== -->
+            <v-window-item value="receta">
+                <div class="d-flex align-center justify-space-between mb-6">
+                    <h3 class="text-subtitle-1 font-weight-bold text-uppercase">
+                        <v-icon start>mdi-prescription</v-icon> Receta Médica
+                    </h3>
+                </div>
+
+                <!-- Formulario para agregar receta -->
+                <v-card variant="outlined" rounded="lg" class="pa-4 mb-6 bg-grey-lighten-4 border-light">
+                    <v-row dense>
+                        <v-col cols="12" md="6">
+                            <v-text-field
+                                v-model="prescriptionForm.tx_medication"
+                                label="Medicamento *"
+                                variant="outlined"
+                                rounded="lg"
+                                density="compact"
+                                hide-details="auto"
+                                :rules="[v => !!v || 'El medicamento es obligatorio']"
+                                placeholder="Nombre del medicamento"
+                            ></v-text-field>
+                        </v-col>
+                        <v-col cols="12" md="3">
+                            <v-text-field
+                                v-model="prescriptionForm.tx_dosage"
+                                label="Dosis"
+                                variant="outlined"
+                                rounded="lg"
+                                density="compact"
+                                hide-details
+                                placeholder="ej. 500mg"
+                            ></v-text-field>
+                        </v-col>
+                        <v-col cols="12" md="3">
+                            <v-text-field
+                                v-model="prescriptionForm.tx_frequency"
+                                label="Frecuencia"
+                                variant="outlined"
+                                rounded="lg"
+                                density="compact"
+                                hide-details
+                                placeholder="ej. Cada 8 horas"
+                            ></v-text-field>
+                        </v-col>
+                        <v-col cols="12" md="4">
+                            <v-text-field
+                                v-model="prescriptionForm.tx_duration"
+                                label="Duración"
+                                variant="outlined"
+                                rounded="lg"
+                                density="compact"
+                                hide-details
+                                placeholder="ej. 7 días"
+                            ></v-text-field>
+                        </v-col>
+                        <v-col cols="12" md="8">
+                            <v-text-field
+                                v-model="prescriptionForm.tx_notes"
+                                label="Notas / Indicaciones"
+                                variant="outlined"
+                                rounded="lg"
+                                density="compact"
+                                hide-details
+                                placeholder="Indicaciones adicionales..."
+                            ></v-text-field>
+                        </v-col>
+                    </v-row>
+                    <v-row class="mt-2">
+                        <v-col cols="12" class="d-flex justify-end">
+                            <v-btn
+                                color="primary"
+                                :loading="savingPrescription"
+                                prepend-icon="mdi-plus"
+                                size="small"
+                                @click="addPrescription"
+                                :disabled="!prescriptionForm.tx_medication.trim()"
+                            >
+                                Agregar Receta
+                            </v-btn>
+                        </v-col>
+                    </v-row>
+                </v-card>
+
+                <!-- Lista de recetas -->
+                <div v-if="loadingPrescriptions" class="text-center pa-10">
+                    <v-progress-circular indeterminate color="primary"></v-progress-circular>
+                    <p class="text-caption mt-2">Cargando recetas...</p>
+                </div>
+
+                <div v-else-if="prescriptions.length === 0" class="text-center pa-10 bg-grey-lighten-4 rounded-lg">
+                    <v-icon size="64" color="grey-lighten-2">mdi-prescription</v-icon>
+                    <p class="text-subtitle-1 text-grey-darken-1 mt-2">No hay recetas registradas para esta historia clínica.</p>
+                    <p class="text-caption text-grey">Use el formulario superior para agregar una nueva receta médica.</p>
+                </div>
+
+                <v-row v-else>
+                    <v-col v-for="(prescription, pIdx) in prescriptions" :key="prescription.id" cols="12" md="6" lg="4">
+                        <v-card variant="outlined" rounded="xl" class="border-light">
+                            <v-card-text>
+                                <div class="d-flex align-center mb-3">
+                                    <v-avatar color="primary" size="40" class="mr-3">
+                                        <v-icon color="white">mdi-pill</v-icon>
+                                    </v-avatar>
+                                    <div>
+                                        <div class="text-subtitle-2 font-weight-bold">{{ prescription.tx_medication }}</div>
+                                        <div class="text-caption text-grey">Receta #{{ prescription.id }}</div>
+                                    </div>
+                                    <v-spacer></v-spacer>
+                                    <v-btn
+                                        icon="mdi-file-pdf-box"
+                                        variant="text"
+                                        color="warning"
+                                        size="small"
+                                        @click="downloadPrescriptionPdf(prescription.id)"
+                                    ></v-btn>
+                                    <v-btn
+                                        icon="mdi-delete-outline"
+                                        variant="text"
+                                        color="error"
+                                        size="small"
+                                        @click="deletePrescription(prescription.id)"
+                                    ></v-btn>
+                                </div>
+
+                                <v-divider class="mb-3"></v-divider>
+
+                                <v-row dense>
+                                    <v-col cols="6" v-if="prescription.tx_dosage">
+                                        <div class="text-caption text-grey">Dosis</div>
+                                        <div class="text-body-2 font-weight-medium">{{ prescription.tx_dosage }}</div>
+                                    </v-col>
+                                    <v-col cols="6" v-if="prescription.tx_frequency">
+                                        <div class="text-caption text-grey">Frecuencia</div>
+                                        <div class="text-body-2 font-weight-medium">{{ prescription.tx_frequency }}</div>
+                                    </v-col>
+                                    <v-col cols="6" v-if="prescription.tx_duration">
+                                        <div class="text-caption text-grey">Duración</div>
+                                        <div class="text-body-2 font-weight-medium">{{ prescription.tx_duration }}</div>
+                                    </v-col>
+                                    <v-col cols="6" v-if="prescription.doctor_name">
+                                        <div class="text-caption text-grey">Prescrito por</div>
+                                        <div class="text-body-2 font-weight-medium">
+                                            <v-icon start size="14" color="primary">mdi-doctor</v-icon>
+                                            {{ prescription.doctor_name }}
+                                        </div>
+                                    </v-col>
+                                </v-row>
+
+                                <v-divider class="my-3" v-if="prescription.tx_notes"></v-divider>
+
+                                <div v-if="prescription.tx_notes" class="text-caption text-grey mb-1">Notas:</div>
+                                <p v-if="prescription.tx_notes" class="text-body-2" style="white-space: pre-wrap;">{{ prescription.tx_notes }}</p>
+
+                                <div class="text-caption text-grey mt-2">
+                                    <v-icon start size="12">mdi-calendar</v-icon>
+                                    {{ formatDate(prescription.date_add) }}
+                                </div>
+                            </v-card-text>
+                        </v-card>
+                    </v-col>
+                </v-row>
             </v-window-item>
 
             <!-- ========== PESTAÑA DE POSTOPERATORIOS (Regla 3) ========== -->
@@ -1399,6 +1577,20 @@ const loadingTimeline = ref(false);
 const showTimelineDetail = ref(false);
 const timelineEvent = ref(null);
 
+// ========== ESTADOS DE RECETA MÉDICA ==========
+const prescriptions = ref([]);
+const loadingPrescriptions = ref(false);
+const savingPrescription = ref(false);
+const downloadingPdf = ref(false);
+
+const prescriptionForm = ref({
+    tx_medication: '',
+    tx_dosage: '',
+    tx_frequency: '',
+    tx_duration: '',
+    tx_notes: ''
+});
+
 // ========== ESTADOS DE VALIDACIÓN Y CIERRE (Reglas 5 y 6) ==========
 const showApproveDialog = ref(false);
 const showCloseDialog = ref(false);
@@ -1461,11 +1653,15 @@ const tabPermissions = [
     { value: 'plan', permission: 'Historia Clinica Diagnostico' },
     { value: 'aptitud', permission: 'Historia Clinica Aptitud' },
     { value: 'habitos', permission: 'Historia Clinica Habitos' },
+    { value: 'receta', permission: 'Historia Clinica Receta' },
 ];
 
 watch(activeTab, (newVal) => {
     if (newVal === 'habitos' && habits.value.length === 0) {
         fetchHabits();
+    }
+    if (newVal === 'receta' && prescriptions.value.length === 0) {
+        fetchPrescriptions();
     }
     if (newVal === 'postoperatorios' && postops.value.length === 0) {
         fetchPostops();
@@ -1651,6 +1847,148 @@ const deleteHabit = async (id) => {
         }
     } catch (error) {
         notify('error', 'Error al eliminar');
+    }
+};
+
+// ========== FUNCIONES DE RECETA MÉDICA ==========
+const fetchPrescriptions = async () => {
+    loadingPrescriptions.value = true;
+    try {
+        const id = route.params.id;
+        const response = await axios.get(API.MEDICAL_HISTORY.PRESCRIPTIONS.ALL(id));
+        if (response.data?.status) {
+            prescriptions.value = response.data.data || [];
+        }
+    } catch (error) {
+        console.error('Error cargando recetas:', error);
+    } finally {
+        loadingPrescriptions.value = false;
+    }
+};
+
+const addPrescription = async () => {
+    if (!prescriptionForm.value.tx_medication.trim()) {
+        notify('warning', 'El nombre del medicamento es obligatorio');
+        return;
+    }
+    savingPrescription.value = true;
+    try {
+        const response = await axios.post(API.MEDICAL_HISTORY.PRESCRIPTIONS.ADD, {
+            id_history: route.params.id,
+            tx_medication: prescriptionForm.value.tx_medication,
+            tx_dosage: prescriptionForm.value.tx_dosage,
+            tx_frequency: prescriptionForm.value.tx_frequency,
+            tx_duration: prescriptionForm.value.tx_duration,
+            tx_notes: prescriptionForm.value.tx_notes
+        });
+
+        if (response.data.status) {
+            prescriptionForm.value = {
+                tx_medication: '',
+                tx_dosage: '',
+                tx_frequency: '',
+                tx_duration: '',
+                tx_notes: ''
+            };
+            await fetchPrescriptions();
+            notify('success', response.data.msg || 'Receta agregada correctamente');
+        } else {
+            notify('error', response.data.msg || 'Error al agregar receta');
+        }
+    } catch (error) {
+        const msg = error?.response?.data?.msg || error?.message || 'Error de conexión';
+        notify('error', msg);
+    } finally {
+        savingPrescription.value = false;
+    }
+};
+
+const deletePrescription = async (id) => {
+    try {
+        const response = await axios.delete(API.MEDICAL_HISTORY.PRESCRIPTIONS.DELETE(id));
+        if (response.data.status) {
+            prescriptions.value = prescriptions.value.filter(p => p.id !== id);
+            notify('success', response.data.msg || 'Receta eliminada');
+        } else {
+            notify('error', response.data.msg || 'Error al eliminar receta');
+        }
+    } catch (error) {
+        const msg = error?.response?.data?.msg || error?.message || 'Error de conexión';
+        notify('error', msg);
+    }
+};
+
+// ========== DESCARGA DE PDF ==========
+const downloadPdf = async () => {
+    downloadingPdf.value = true;
+    try {
+        const id = route.params.id;
+        const response = await axios.get(API.MEDICAL_HISTORY.PDF(id), {
+            responseType: 'json'
+        });
+
+        if (response.data?.status && response.data?.data?.pdf_base64) {
+            const byteCharacters = atob(response.data.data.pdf_base64);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], { type: 'application/pdf' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            const patientName = history.value ? `${history.value.tx_first_name}_${history.value.tx_last_name}` : 'historia_clinica';
+            link.download = `HC_${patientName}_${id}.pdf`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            notify('success', 'PDF descargado correctamente');
+        } else {
+            notify('error', response.data?.msg || 'Error al generar el PDF');
+        }
+    } catch (error) {
+        const msg = error?.response?.data?.msg || error?.message || 'Error de conexión';
+        notify('error', msg);
+    } finally {
+        downloadingPdf.value = false;
+    }
+};
+
+// ========== DESCARGA DE PDF DE RECETA INDIVIDUAL ==========
+const downloadPrescriptionPdf = async (id) => {
+    downloadingPdf.value = true;
+    try {
+        const response = await axios.get(API.MEDICAL_HISTORY.PRESCRIPTION_PDF(id), {
+            responseType: 'json'
+        });
+
+        if (response.data?.status && response.data?.data?.pdf_base64) {
+            const byteCharacters = atob(response.data.data.pdf_base64);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], { type: 'application/pdf' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = response.data.filename || `receta_medica_${id}.pdf`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            notify('success', 'PDF de receta descargado correctamente');
+        } else {
+            notify('error', response.data?.msg || 'Error al generar el PDF de la receta');
+        }
+    } catch (error) {
+        const msg = error?.response?.data?.msg || error?.message || 'Error de conexión';
+        notify('error', msg);
+    } finally {
+        downloadingPdf.value = false;
     }
 };
 
