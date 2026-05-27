@@ -2,9 +2,9 @@
   <UiParentCard title="Listado de Usuarios">
     <template v-slot:action>
         <div class="d-flex align-center gap-3">
-            <ExpandableSearch 
-              v-model="search" 
-              label="Nombre, email, correo cargo o rol" 
+            <ExpandableSearch
+              v-model="search"
+              label="Nombre, email, correo cargo o rol"
             />
         </div>
     </template>
@@ -18,46 +18,46 @@
       <v-table v-else>
         <thead>
           <tr>
-            <th @click="sortBy('id')" style="cursor: pointer">
+            <th @click="sortBy('id')" style="cursor: pointer; width: 50px;">
               ID
               <v-icon v-if="sortKey === 'id'" :icon="getSortIcon('id')" size="16" />
             </th>
-            <th @click="sortBy('tx_first_name')" style="cursor: pointer">
+            <th @click="sortBy('tx_first_name')" style="cursor: pointer; min-width: 120px;">
               Nombre
               <v-icon v-if="sortKey === 'tx_first_name'" :icon="getSortIcon('tx_first_name')" size="16" />
             </th>
-            <th @click="sortBy('tx_last_name')" style="cursor: pointer">
+            <th @click="sortBy('tx_last_name')" style="cursor: pointer; min-width: 120px;">
               Apellido
               <v-icon v-if="sortKey === 'tx_last_name'" :icon="getSortIcon('tx_last_name')" size="16" />
             </th>
-            <th @click="sortBy('tx_username')" style="cursor: pointer">
+            <th @click="sortBy('tx_username')" style="cursor: pointer; min-width: 100px;">
               Usuario
               <v-icon v-if="sortKey === 'tx_username'" :icon="getSortIcon('tx_username')" size="16" />
             </th>
-            <th @click="sortBy('tx_phone')" style="cursor: pointer">
+            <th @click="sortBy('tx_phone')" style="cursor: pointer; min-width: 120px;">
               Telefono
               <v-icon v-if="sortKey === 'tx_phone'" :icon="getSortIcon('tx_phone')" size="16" />
             </th>
-            <th @click="sortBy('tx_email')" style="cursor: pointer">
+            <th @click="sortBy('tx_email')" style="cursor: pointer; min-width: 180px;">
               Correo
               <v-icon v-if="sortKey === 'tx_email'" :icon="getSortIcon('tx_email')" size="16" />
             </th>
 
-            <th @click="sortBy('tx_user_type')" style="cursor: pointer">
+            <th @click="sortBy('tx_user_type')" style="cursor: pointer; min-width: 100px;">
               Cargo
               <v-icon v-if="sortKey === 'tx_user_type'" :icon="getSortIcon('tx_user_type')" size="16" />
             </th>
 
-            <th @click="sortBy('tx_rol')" style="cursor: pointer">
+            <th @click="sortBy('tx_rol')" style="cursor: pointer; min-width: 100px;">
               Rol
               <v-icon v-if="sortKey === 'tx_rol'" :icon="getSortIcon('tx_rol')" size="16" />
             </th>
-            <th @click="sortBy('in_status')" style="cursor: pointer">
+            <th @click="sortBy('in_status')" style="cursor: pointer; width: 90px;">
               Estado
               <v-icon v-if="sortKey === 'in_status'" :icon="getSortIcon('in_status')" size="16" />
             </th>
-            <th style="text-align: center;">Firma</th>
-            <th>Acciones</th>
+            <th style="text-align: center; width: 70px;">Firma</th>
+            <th style="width: 80px;">Acciones</th>
           </tr>
         </thead>
 
@@ -96,13 +96,16 @@
                     </v-btn>
                   </template>
                   <v-list>
-                    <v-list-item @click="handleEdit(user)">
-                      <v-list-item-title>Editar</v-list-item-title>
+                    <v-list-item @click="handleViewDetail(user)">
+                      <v-list-item-title>
+                        <v-icon start size="18">mdi-eye-outline</v-icon> Ver más
+                      </v-list-item-title>
                     </v-list-item>
-
-                    <!-- <v-list-item @click="handleDelete(user.id)">
-                      <v-list-item-title>Eliminar</v-list-item-title>
-                    </v-list-item> -->
+                    <v-list-item @click="handleEdit(user)">
+                      <v-list-item-title>
+                        <v-icon start size="18">mdi-pencil-outline</v-icon> Editar
+                      </v-list-item-title>
+                    </v-list-item>
                   </v-list>
                 </v-menu>
               </td>
@@ -137,6 +140,158 @@
         </v-btn>
       </div>
     </v-card-item>
+
+    <!-- MODAL DE DETALLE DEL USUARIO -->
+    <v-dialog v-model="detailDialog" max-width="750">
+      <v-card v-if="selectedUser" class="pa-4">
+        <v-card-title class="d-flex align-center pa-4 pb-2">
+          <v-icon start size="28" color="primary">mdi-account-circle</v-icon>
+          <span class="text-h5 font-weight-bold">Detalle del Usuario</span>
+          <v-spacer />
+          <v-btn icon variant="text" @click="detailDialog = false">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+        </v-card-title>
+
+        <v-divider class="mx-4"></v-divider>
+
+        <v-card-text class="pa-4">
+          <!-- Información Personal -->
+          <div class="text-subtitle-1 font-weight-bold text-primary mb-3 d-flex align-center">
+            <v-icon start size="20">mdi-account-details</v-icon> Información Personal
+          </div>
+          <v-row class="mb-4">
+            <v-col cols="6" sm="4" class="py-1">
+              <div class="text-caption text-grey">ID</div>
+              <div class="text-body-2 font-weight-medium">{{ selectedUser.id }}</div>
+            </v-col>
+            <v-col cols="6" sm="4" class="py-1">
+              <div class="text-caption text-grey">Nombre</div>
+              <div class="text-body-2 font-weight-medium">{{ selectedUser.tx_first_name }}</div>
+            </v-col>
+            <v-col cols="6" sm="4" class="py-1">
+              <div class="text-caption text-grey">Apellido</div>
+              <div class="text-body-2 font-weight-medium">{{ selectedUser.tx_last_name }}</div>
+            </v-col>
+            <v-col cols="6" sm="4" class="py-1">
+              <div class="text-caption text-grey">Correo Electrónico</div>
+              <div class="text-body-2 font-weight-medium">{{ selectedUser.tx_email }}</div>
+            </v-col>
+            <v-col cols="6" sm="4" class="py-1">
+              <div class="text-caption text-grey">Teléfono</div>
+              <div class="text-body-2 font-weight-medium">{{ selectedUser.tx_phone }}</div>
+            </v-col>
+            <v-col cols="6" sm="4" class="py-1">
+              <div class="text-caption text-grey">Nombre de Usuario</div>
+              <div class="text-body-2 font-weight-medium">{{ selectedUser.tx_username }}</div>
+            </v-col>
+          </v-row>
+
+          <!-- Firma Digital -->
+          <template v-if="selectedUser.tx_signature">
+            <v-divider class="my-3"></v-divider>
+            <div class="text-subtitle-1 font-weight-bold text-primary mb-3 d-flex align-center">
+              <v-icon start size="20">mdi-file-sign</v-icon> Firma Digital
+            </div>
+            <v-row>
+              <v-col cols="12" sm="6">
+                <v-img
+                  :src="selectedUser.tx_signature"
+                  max-height="120"
+                  contain
+                  class="border rounded-lg pa-2"
+                  style="background: white;"
+                ></v-img>
+              </v-col>
+            </v-row>
+          </template>
+
+          <!-- Información del Sistema -->
+          <v-divider class="my-3"></v-divider>
+          <div class="text-subtitle-1 font-weight-bold text-primary mb-3 d-flex align-center">
+            <v-icon start size="20">mdi-shield-account</v-icon> Información del Sistema
+          </div>
+          <v-row class="mb-4">
+            <v-col cols="6" sm="4" class="py-1">
+              <div class="text-caption text-grey">Tipo de Usuario</div>
+              <v-chip size="small" color="primary" variant="tonal">{{ selectedUser.tx_user_type }}</v-chip>
+            </v-col>
+            <v-col cols="6" sm="4" class="py-1">
+              <div class="text-caption text-grey">Rol del Sistema</div>
+              <v-chip size="small" color="secondary" variant="tonal">{{ selectedUser.tx_rol }}</v-chip>
+            </v-col>
+            <v-col cols="6" sm="4" class="py-1">
+              <div class="text-caption text-grey">Estado</div>
+              <v-chip :color="selectedUser.in_status != 0 ? 'success' : 'error'" size="small">
+                {{ selectedUser.in_status != 0 ? 'Activo' : 'Inactivo' }}
+              </v-chip>
+            </v-col>
+          </v-row>
+
+          <!-- Información Profesional (solo si no es Administrativo) -->
+          <template v-if="selectedUser.tx_user_type !== 'Administrativo'">
+            <v-divider class="my-3"></v-divider>
+            <div class="text-subtitle-1 font-weight-bold text-primary mb-3 d-flex align-center">
+              <v-icon start size="20">mdi-school-outline</v-icon> Información Profesional
+            </div>
+            <v-row class="mb-4">
+              <v-col cols="6" sm="4" class="py-1">
+                <div class="text-caption text-grey">Cédula / ID Document</div>
+                <div class="text-body-2 font-weight-medium">{{ selectedUser.tx_document_id || '—' }}</div>
+              </v-col>
+              <v-col cols="6" sm="4" class="py-1">
+                <div class="text-caption text-grey">Número RETHUS</div>
+                <div class="text-body-2 font-weight-medium">{{ selectedUser.tx_rethus_number || '—' }}</div>
+              </v-col>
+
+              <template v-if="selectedUser.tx_user_type === 'Médico'">
+                <v-col cols="6" sm="4" class="py-1">
+                  <div class="text-caption text-grey">Registro Médico</div>
+                  <div class="text-body-2 font-weight-medium">{{ selectedUser.tx_medical_registration || '—' }}</div>
+                </v-col>
+                <v-col cols="6" sm="4" class="py-1">
+                  <div class="text-caption text-grey">Especialidad</div>
+                  <div class="text-body-2 font-weight-medium">{{ selectedUser.tx_specialty || '—' }}</div>
+                </v-col>
+                <v-col cols="6" sm="4" class="py-1">
+                  <div class="text-caption text-grey">Subespecialidad</div>
+                  <div class="text-body-2 font-weight-medium">{{ selectedUser.tx_subspecialty || '—' }}</div>
+                </v-col>
+                <v-col cols="6" sm="4" class="py-1">
+                  <div class="text-caption text-grey">Universidad</div>
+                  <div class="text-body-2 font-weight-medium">{{ selectedUser.tx_university || '—' }}</div>
+                </v-col>
+                <v-col cols="6" sm="4" class="py-1">
+                  <div class="text-caption text-grey">Año de Grado</div>
+                  <div class="text-body-2 font-weight-medium">{{ selectedUser.tx_graduation_year || '—' }}</div>
+                </v-col>
+              </template>
+
+              <template v-if="selectedUser.tx_user_type === 'Enfermero'">
+                <v-col cols="6" sm="4" class="py-1">
+                  <div class="text-caption text-grey">Nivel de Enfermería</div>
+                  <div class="text-body-2 font-weight-medium">{{ selectedUser.tx_nursing_level || '—' }}</div>
+                </v-col>
+                <v-col cols="6" sm="4" class="py-1">
+                  <div class="text-caption text-grey">Certificaciones</div>
+                  <div class="text-body-2 font-weight-medium">{{ selectedUser.tx_certifications || '—' }}</div>
+                </v-col>
+              </template>
+            </v-row>
+          </template>
+        </v-card-text>
+
+        <v-divider class="mx-4"></v-divider>
+
+        <v-card-actions class="pa-4">
+          <v-spacer />
+          <v-btn variant="text" color="primary" @click="handleEdit(selectedUser)">
+            <v-icon start>mdi-pencil-outline</v-icon> Editar Usuario
+          </v-btn>
+          <v-btn variant="text" color="grey" @click="detailDialog = false">Cerrar</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </UiParentCard>
 </template>
 
@@ -160,6 +315,16 @@ interface user {
   tx_rol?: string;
   tx_user_type?: string;
   tx_signature?: string;
+  tx_document_id?: string;
+  tx_rethus_number?: string;
+  tx_medical_registration?: string;
+  tx_specialty?: string;
+  tx_subspecialty?: string;
+  tx_university?: string;
+  tx_graduation_year?: number | string;
+  tx_nursing_level?: string;
+  tx_certifications?: string;
+  tx_photo?: string;
 }
 
 const idBusiness = localStorage.getItem('id_business');
@@ -171,6 +336,10 @@ const itemsPerPage = 10;
 const loading = ref(true);
 const { notify } = useNotification();
 const router = useRouter();
+
+// Modal de detalle
+const detailDialog = ref(false);
+const selectedUser = ref<user | null>(null);
 
 const fetchUsers = async () => {
   try {
@@ -187,7 +356,7 @@ onMounted(async () => {
   await fetchUsers();
 });
 
-const sortKey = ref<keyof user | undefined>(undefined); 
+const sortKey = ref<keyof user | undefined>(undefined);
 const sortOrder = ref<'asc' | 'desc'>('asc');
 
 function sortBy(key: keyof user) {
@@ -228,7 +397,7 @@ const paginatedusers = computed(() => {
 
   if (sortKey.value !== undefined) {
     sorted.sort((a, b) => {
-      const key = sortKey.value as keyof user; 
+      const key = sortKey.value as keyof user;
 
       const valA = a[key];
       const valB = b[key];
@@ -261,6 +430,11 @@ function goToPage(page: number) {
   if (page >= 1 && page <= totalPages.value) {
     currentPage.value = page;
   }
+}
+
+function handleViewDetail(user: user) {
+  selectedUser.value = user;
+  detailDialog.value = true;
 }
 
 function handleEdit(user: user) {
