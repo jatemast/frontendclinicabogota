@@ -84,11 +84,11 @@
               </v-row>
             </template>
 
-            <!-- SECCIÓN: FIRMA DEL MÉDICO -->
-            <template v-if="form.tx_user_type === 'Médico'">
+            <!-- SECCIÓN: FIRMA DIGITAL (para todos los tipos de usuario) -->
+            <template v-if="form.tx_user_type">
               <v-divider class="my-6"></v-divider>
               <div class="text-subtitle-1 font-weight-bold mb-4 text-primary">
-                <v-icon start size="20">mdi-file-sign</v-icon> Firma Digital del Médico
+                <v-icon start size="20">mdi-file-sign</v-icon> Firma Digital
               </div>
               <v-row>
                 <v-col cols="12" md="6">
@@ -380,8 +380,8 @@ onMounted(async () => {
         certificationsArray.value = u.tx_certifications.split(', ').filter(Boolean);
       }
 
-      // Cargar firma existente si el usuario es médico
-      if (u.tx_user_type === 'Médico' && u.tx_signature) {
+      // Cargar firma existente si el usuario tiene firma
+      if (u.tx_signature) {
         existingSignature.value = u.tx_signature;
       }
 

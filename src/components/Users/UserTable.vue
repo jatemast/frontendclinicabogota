@@ -56,6 +56,7 @@
               Estado
               <v-icon v-if="sortKey === 'in_status'" :icon="getSortIcon('in_status')" size="16" />
             </th>
+            <th style="text-align: center;">Firma</th>
             <th>Acciones</th>
           </tr>
         </thead>
@@ -75,6 +76,17 @@
                 <v-chip :color="user.in_status != 0 ? 'success' : 'error'" dark>
                   <b>{{ user.in_status != 0 ? 'Activo' : 'Inactivo' }}</b>
                 </v-chip>
+              </td>
+              <td style="text-align: center;">
+                <v-avatar v-if="user.tx_signature" size="36" class="border rounded">
+                  <v-img
+                    :src="user.tx_signature"
+                    alt="Firma"
+                    contain
+                    style="background: white; padding: 2px;"
+                  ></v-img>
+                </v-avatar>
+                <v-icon v-else color="grey-lighten-1" size="20">mdi-file-sign</v-icon>
               </td>
               <td>
                 <v-menu>
@@ -98,7 +110,7 @@
           </template>
 
           <tr v-else>
-            <td colspan="12" class="text-center text-muted py-4">
+            <td colspan="13" class="text-center text-muted py-4">
               No hay registros que mostrar.
             </td>
           </tr>
@@ -147,6 +159,7 @@ interface user {
   in_status?: number;
   tx_rol?: string;
   tx_user_type?: string;
+  tx_signature?: string;
 }
 
 const idBusiness = localStorage.getItem('id_business');
