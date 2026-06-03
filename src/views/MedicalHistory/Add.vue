@@ -271,8 +271,8 @@
                             v-model="form.tx_motivo_consulta"
                             placeholder="Escriba aquí la razón principal..."
                             variant="outlined"
-                            counter="250"
-                            maxlength="250"
+                            counter="1000"
+                            maxlength="1000"
                             rows="4"
                             persistent-counter
                             class="modern-textarea"
