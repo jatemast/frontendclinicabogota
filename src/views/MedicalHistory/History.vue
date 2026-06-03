@@ -105,7 +105,7 @@
                             <h3 class="text-subtitle-1 font-weight-bold text-uppercase">Motivo</h3>
                             <v-btn type="submit" color="primary" :loading="saving === 'resumen'" :size="$vuetify.display.mobile ? 'small' : 'default'" prepend-icon="mdi-content-save">Guardar</v-btn>
                         </div>
-                        <v-textarea v-model="history.tx_motivo_consulta" label="Razón de la visita" variant="outlined" rows="3" rounded="lg" counter="250" persistent-counter density="comfortable"></v-textarea>
+                        <v-textarea v-model="history.tx_motivo_consulta" label="Razón de la visita" variant="outlined" rows="3" rounded="lg" counter="1000" persistent-counter density="comfortable"></v-textarea>
                         
                         <div class="text-overline text-primary mt-4 mb-2">Procedimientos vinculados</div>
                             <v-chip v-for="proc in history.procedures" :key="proc.id" class="me-2" color="success" variant="tonal" size="small" prepend-icon="mdi-needle">
