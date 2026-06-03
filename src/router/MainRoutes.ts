@@ -235,6 +235,35 @@ const MainRoutes = {
             masterOnly: true
           }
         },
+
+        // Agendamiento de Citas
+        {
+          name: 'Appointments',
+          path: '/appointments',
+          component: () => import('@/views/Appointments/Appointments.vue'),
+          meta: {
+            requiresAuth: true,
+            module: 'Agendamiento de Citas'
+          }
+        },
+        {
+          name: 'AppointmentsAdd',
+          path: '/appointments-add',
+          component: () => import('@/views/Appointments/Add.vue'),
+          meta: {
+            requiresAuth: true,
+            module: 'Agendamiento de Citas'
+          }
+        },
+        {
+          name: 'AppointmentsEdt',
+          path: '/appointments-edt/:id',
+          component: () => import('@/views/Appointments/Edt.vue'),
+          meta: {
+            requiresAuth: true,
+            module: 'Agendamiento de Citas'
+          }
+        },
         
         {
           name: 'SaasMasters',

@@ -60,6 +60,16 @@ const sidebarItem: menu[] = [
     module: "Listado de Cotizaciones",
   },
 
+  { header: 'Agenda' },
+
+  {
+    title: "Agendamiento de Citas",
+    icon: CalendarIcon,
+    BgColor: 'primary',
+    to: "/appointments",
+    module: "Agendamiento de Citas",
+  },
+
   { header: 'Historias Clínicas' },
   
   {

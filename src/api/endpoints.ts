@@ -131,4 +131,20 @@ export const API = {
     MASTERS: `${BASE}api/saas/masters`,
     IMPERSONATE: (id: number | string) => `${BASE}api/saas/impersonate/${id}`,
   },
+
+  // ============ AGENDAMIENTO DE CITAS ============
+  APPOINTMENTS: {
+    ALL: `${BASE}api/appointments/all`,
+    DATE: (date: string) => `${BASE}api/appointments/date/${date}`,
+    MONTH: (year: number, month: number) => `${BASE}api/appointments/month/${year}/${month}`,
+    WEEK: `${BASE}api/appointments/week`,
+    SLOTS: (date: string) => `${BASE}api/appointments/slots/${date}`,
+    EDIT: (id: number | string) => `${BASE}api/appointments/edt/${id}`,
+    DASHBOARD: `${BASE}api/appointments/dashboard`,
+    ADD: `${BASE}api/appointments/add`,
+    UPDATE: (id: number | string) => `${BASE}api/appointments/upd/${id}`,
+    CANCEL: (id: number | string) => `${BASE}api/appointments/cancel/${id}`,
+    STATUS: (id: number | string) => `${BASE}api/appointments/status/${id}`,
+    DELETE: (id: number | string) => `${BASE}api/appointments/del/${id}`,
+  },
 };

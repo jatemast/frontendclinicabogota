@@ -136,6 +136,23 @@ const cTopProcOpts = computed(() => {
 const cTopProcSer = computed(() => [{ name: 'Usos', data: (dashboardData.value.topProcedures || []).map((d: any) => d.total) }]);
 
 // ==================== FETCH ====================
+const appointmentStats = ref<any>({});
+
+const fetchAppointmentStats = async () => {
+    if (isMaster.value) return;
+    try {
+        const token = localStorage.getItem('access_token');
+        const headers = { Authorization: `Bearer ${token}` };
+        const res = await axios.get(
+            `${import.meta.env.VITE_API_URL}api/appointments/dashboard`,
+            { headers }
+        );
+        if (res.data.status) appointmentStats.value = res.data.data;
+    } catch (error) {
+        // Silently fail - appointments are optional
+    }
+};
+
 const fetchData = async () => {
     loading.value = true;
     try {
@@ -153,7 +170,10 @@ const fetchData = async () => {
     }
 };
 
-onMounted(fetchData);
+onMounted(() => {
+    fetchData();
+    fetchAppointmentStats();
+});
 </script>
 
 <template>
@@ -488,6 +508,87 @@ onMounted(fetchData);
                             <div class="mt-3 d-flex align-center text-caption text-medium-emphasis">
                                 <v-icon size="14" color="indigo" class="mr-1">mdi-circle-small</v-icon>
                                 <span>Tipos de procedimientos</span>
+                            </div>
+                        </v-card-text>
+                    </v-card>
+                </v-col>
+            </v-row>
+
+            <!-- APPOINTMENT KPIs -->
+            <v-row class="mb-4">
+                <v-col cols="12">
+                    <div class="d-flex align-center mb-2">
+                        <v-icon color="teal" class="mr-2">mdi-calendar-month</v-icon>
+                        <span class="text-h6 font-weight-bold text-grey-darken-1">Agenda de Citas</span>
+                        <v-divider class="ml-4"></v-divider>
+                    </div>
+                </v-col>
+            </v-row>
+            <v-row class="mb-6">
+                <v-col cols="12" sm="6" lg="3">
+                    <v-card elevation="2" class="rounded-xl kpi-card" @click="goTo('/appointments')" style="cursor: pointer;">
+                        <v-card-text class="pa-5">
+                            <div class="d-flex align-center justify-space-between">
+                                <div>
+                                    <span class="text-overline font-weight-bold text-teal">Citas de Hoy</span>
+                                    <h2 class="text-h3 font-weight-black mt-1">{{ appointmentStats.today_count || 0 }}</h2>
+                                </div>
+                                <v-avatar color="lightteal" size="56" rounded="lg"><v-icon color="teal" size="28">mdi-calendar-today</v-icon></v-avatar>
+                            </div>
+                            <div class="mt-3 d-flex align-center text-caption text-medium-emphasis">
+                                <v-icon size="14" color="teal" class="mr-1">mdi-circle-small</v-icon>
+                                <span>{{ appointmentStats.today_customers || 0 }} clientes hoy</span>
+                            </div>
+                        </v-card-text>
+                    </v-card>
+                </v-col>
+                <v-col cols="12" sm="6" lg="3">
+                    <v-card elevation="2" class="rounded-xl kpi-card" @click="goTo('/appointments')" style="cursor: pointer;">
+                        <v-card-text class="pa-5">
+                            <div class="d-flex align-center justify-space-between">
+                                <div>
+                                    <span class="text-overline font-weight-bold text-warning">Pendientes</span>
+                                    <h2 class="text-h3 font-weight-black mt-1">{{ appointmentStats.total_pending || 0 }}</h2>
+                                </div>
+                                <v-avatar color="lightwarning" size="56" rounded="lg"><v-icon color="warning" size="28">mdi-clock-outline</v-icon></v-avatar>
+                            </div>
+                            <div class="mt-3 d-flex align-center text-caption text-medium-emphasis">
+                                <v-icon size="14" color="warning" class="mr-1">mdi-circle-small</v-icon>
+                                <span>Por confirmar</span>
+                            </div>
+                        </v-card-text>
+                    </v-card>
+                </v-col>
+                <v-col cols="12" sm="6" lg="3">
+                    <v-card elevation="2" class="rounded-xl kpi-card" @click="goTo('/appointments')" style="cursor: pointer;">
+                        <v-card-text class="pa-5">
+                            <div class="d-flex align-center justify-space-between">
+                                <div>
+                                    <span class="text-overline font-weight-bold text-success">Confirmadas</span>
+                                    <h2 class="text-h3 font-weight-black mt-1">{{ appointmentStats.total_confirmed || 0 }}</h2>
+                                </div>
+                                <v-avatar color="lightsuccess" size="56" rounded="lg"><v-icon color="success" size="28">mdi-check-circle</v-icon></v-avatar>
+                            </div>
+                            <div class="mt-3 d-flex align-center text-caption text-medium-emphasis">
+                                <v-icon size="14" color="success" class="mr-1">mdi-circle-small</v-icon>
+                                <span>Agendadas</span>
+                            </div>
+                        </v-card-text>
+                    </v-card>
+                </v-col>
+                <v-col cols="12" sm="6" lg="3">
+                    <v-card elevation="2" class="rounded-xl kpi-card" @click="goTo('/appointments')" style="cursor: pointer;">
+                        <v-card-text class="pa-5">
+                            <div class="d-flex align-center justify-space-between">
+                                <div>
+                                    <span class="text-overline font-weight-bold text-info">Completadas</span>
+                                    <h2 class="text-h3 font-weight-black mt-1">{{ appointmentStats.total_completed || 0 }}</h2>
+                                </div>
+                                <v-avatar color="lightinfo" size="56" rounded="lg"><v-icon color="info" size="28">mdi-check-all</v-icon></v-avatar>
+                            </div>
+                            <div class="mt-3 d-flex align-center text-caption text-medium-emphasis">
+                                <v-icon size="14" color="info" class="mr-1">mdi-circle-small</v-icon>
+                                <span>Atendidas</span>
                             </div>
                         </v-card-text>
                     </v-card>
