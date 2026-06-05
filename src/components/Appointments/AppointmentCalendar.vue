@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue';
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import axios from 'axios';
 import { useNotification } from '@/utils/useNotification';
 import { API } from '@/api/endpoints';
@@ -56,7 +56,8 @@ const fetchAppointments = async () => {
         id: apt.id,
         start: `${apt.date_appointment} ${apt.time_start}`,
         end: `${apt.date_appointment} ${apt.time_end}`,
-        title: `${apt.tx_customer_name} (${apt.tx_dni || ''})`,
+        // Título con hora y nombre visibles en todas las vistas
+        title: `${apt.time_start} - ${apt.tx_customer_name}`,
         content: apt.tx_notes ? `<i>${apt.tx_notes.substring(0, 60)}${apt.tx_notes.length > 60 ? '...' : ''}</i>` : '',
         class: `appointment-${apt.tx_status}`,
         background: true,
@@ -125,7 +126,22 @@ const vueCalEvents = computed(() => {
   }));
 });
 
-onMounted(fetchAppointments);
+let pollingInterval: ReturnType<typeof setInterval> | null = null;
+
+onMounted(() => {
+  fetchAppointments();
+  // Polling AJAX: actualizar citas cada 20 segundos
+  pollingInterval = setInterval(() => {
+    fetchAppointments();
+  }, 20000);
+});
+
+onUnmounted(() => {
+  if (pollingInterval) {
+    clearInterval(pollingInterval);
+    pollingInterval = null;
+  }
+});
 </script>
 
 <template>
