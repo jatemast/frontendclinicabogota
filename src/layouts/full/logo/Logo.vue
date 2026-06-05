@@ -1,11 +1,49 @@
 <script setup lang="ts">
+import { ref, onMounted } from 'vue';
 import { RouterLink } from 'vue-router';
-import logo from '@/assets/images/logos/logo.png';
+import axios from 'axios';
+import fallbackLogo from '@/assets/images/logos/logo.png';
+import { API } from '@/api/endpoints';
+
+const props = defineProps<{ isMini?: boolean }>();
+
+const logoUrl = ref<string>(fallbackLogo);
+const loading = ref(true);
+
+const API_BASE = import.meta.env.VITE_API_URL;
+
+onMounted(async () => {
+  try {
+    const res = await axios.get(API.BUSINESS.DETAILS);
+    if (res.data?.status && res.data?.data?.tx_logo) {
+      const txLogo = res.data.data.tx_logo;
+      const idBusiness = localStorage.getItem('id_business') || '1';
+      
+      // Si es una URL completa (ImgBB), usarla directamente
+      if (txLogo.startsWith('http')) {
+        logoUrl.value = txLogo;
+      } else {
+        // Si es solo un nombre de archivo, construir la URL local
+        logoUrl.value = `${API_BASE}uploads/logos/${idBusiness}/${txLogo}`;
+      }
+    }
+  } catch (error) {
+    // Si falla, mantener el logo por defecto (fallbackLogo)
+    console.warn('No se pudo cargar el logo del negocio, usando logo por defecto');
+  } finally {
+    loading.value = false;
+  }
+});
 </script>
 <template>
-  <div class="logo " >
-        <RouterLink to="/dashboard">
-            <img :src="logo" alt="home" style="width: 120%; height: 120px" />
-        </RouterLink>
-    </div>
+  <div class="logo">
+    <RouterLink to="/dashboard">
+      <img
+        :src="logoUrl"
+        alt="Logo"
+        :style="isMini ? 'width: 100%; height: auto; max-height: 50px;' : 'width: 120%; height: 120px; object-fit: contain;'"
+        @error="logoUrl = fallbackLogo"
+      />
+    </RouterLink>
+  </div>
 </template>

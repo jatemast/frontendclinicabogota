@@ -8,6 +8,11 @@ export const API = {
   // ============ AUTENTICACIÓN ============
   LOGIN: `${BASE}login`,
 
+  // ============ NEGOCIO / BUSINESS ============
+  BUSINESS: {
+    DETAILS: `${BASE}api/business/details`,
+  },
+
   // ============ USUARIOS ============
   USERS: {
     ALL: `${BASE}api/users/all`,
