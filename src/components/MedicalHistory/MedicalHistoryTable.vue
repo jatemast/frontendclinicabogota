@@ -320,8 +320,21 @@ const fetchUsers = async () => {
     }
 };
 
+let pollingInterval: ReturnType<typeof setInterval> | null = null;
+
 onMounted(async () => {
   await fetchUsers();
+  // Polling AJAX: actualizar datos cada 15 segundos
+  pollingInterval = setInterval(() => {
+    fetchUsers();
+  }, 15000);
+});
+
+onUnmounted(() => {
+  if (pollingInterval) {
+    clearInterval(pollingInterval);
+    pollingInterval = null;
+  }
 });
 
 const sortKey = ref<keyof Record | undefined>(undefined);

@@ -1368,7 +1368,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue';
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
 import { useNotification } from '@/utils/useNotification';
@@ -1602,8 +1602,13 @@ const closeReason = ref('');
 const postopsCount = computed(() => postops.value.length);
 
 // --- Helpers de estado de HC ---
+function normalizeStatus(status) {
+    const num = Number(status);
+    return (num >= 0 && num <= 3) ? num : -1;
+}
+
 function getStatusLabel(status) {
-    switch (status) {
+    switch (normalizeStatus(status)) {
         case 0: return 'Inactivo';
         case 1: return 'Iniciada';
         case 2: return 'Validada';
@@ -1613,7 +1618,7 @@ function getStatusLabel(status) {
 }
 
 function getStatusColor(status) {
-    switch (status) {
+    switch (normalizeStatus(status)) {
         case 0: return 'grey';
         case 1: return 'primary';
         case 2: return 'success';
@@ -1623,7 +1628,7 @@ function getStatusColor(status) {
 }
 
 function getStatusIcon(status) {
-    switch (status) {
+    switch (normalizeStatus(status)) {
         case 0: return 'mdi-cancel';
         case 1: return 'mdi-progress-check';
         case 2: return 'mdi-check-circle';
@@ -1671,6 +1676,8 @@ watch(activeTab, (newVal) => {
     }
 });
 
+let pollingInterval = null;
+
 onMounted(async () => {
     await fetchPermissions();
     await fetchHistory();
@@ -1684,6 +1691,23 @@ onMounted(async () => {
         await fetchTimeline();
     } else {
         setInitialTab();
+    }
+
+    // Polling AJAX: actualizar datos cada 15 segundos
+    pollingInterval = setInterval(async () => {
+        await fetchHistory();
+        // Refrescar también los datos de la pestaña activa
+        if (activeTab.value === 'habitos') await fetchHabits();
+        if (activeTab.value === 'receta') await fetchPrescriptions();
+        if (activeTab.value === 'postoperatorios') await fetchPostops();
+        if (activeTab.value === 'timeline') await fetchTimeline();
+    }, 15000);
+});
+
+onUnmounted(() => {
+    if (pollingInterval) {
+        clearInterval(pollingInterval);
+        pollingInterval = null;
     }
 });
 
@@ -1723,6 +1747,9 @@ const fetchHistory = async () => {
             if (data.tx_peso) {
                 data.tx_peso = String(data.tx_peso).replace('.', ',');
             }
+            
+            // Normalizar in_status a número para comparaciones estrictas en template
+            data.in_status = Number(data.in_status);
             
             history.value = data;
         }
