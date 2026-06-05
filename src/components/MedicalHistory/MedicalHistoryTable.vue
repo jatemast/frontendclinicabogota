@@ -270,8 +270,13 @@ const selectedRecord = ref<Record | null>(null);
 const closeReason = ref('');
 
 // --- Helpers de estado ---
+function normalizeStatus(status: any): number {
+  const num = Number(status);
+  return (num >= 0 && num <= 3) ? num : -1;
+}
+
 function getStatusLabel(status: number | undefined): string {
-  switch (status) {
+  switch (normalizeStatus(status)) {
     case 0: return 'Inactivo';
     case 1: return 'Iniciada';
     case 2: return 'Validada';
@@ -281,7 +286,7 @@ function getStatusLabel(status: number | undefined): string {
 }
 
 function getStatusColor(status: number | undefined): string {
-  switch (status) {
+  switch (normalizeStatus(status)) {
     case 0: return 'grey';
     case 1: return 'primary';
     case 2: return 'success';
@@ -291,7 +296,7 @@ function getStatusColor(status: number | undefined): string {
 }
 
 function getStatusIcon(status: number | undefined): string {
-  switch (status) {
+  switch (normalizeStatus(status)) {
     case 0: return 'mdi-cancel';
     case 1: return 'mdi-progress-check';
     case 2: return 'mdi-check-circle';
@@ -303,7 +308,11 @@ function getStatusIcon(status: number | undefined): string {
 const fetchUsers = async () => {
     try {
         const res = await axios.get(API.MEDICAL_HISTORY.ALL);
-        records.value = res.data.data;
+        // Normalizar in_status a número para evitar problemas de tipo (string vs number)
+        records.value = (res.data.data || []).map((r: any) => ({
+            ...r,
+            in_status: Number(r.in_status)
+        }));
     } catch (error) {
         console.error('Error cargando data en la tabla:', error);
     } finally {
