@@ -188,23 +188,31 @@
           </v-row>
 
           <!-- Firma Digital -->
-          <template v-if="selectedUser.tx_signature">
-            <v-divider class="my-3"></v-divider>
-            <div class="text-subtitle-1 font-weight-bold text-primary mb-3 d-flex align-center">
-              <v-icon start size="20">mdi-file-sign</v-icon> Firma Digital
-            </div>
-            <v-row>
-              <v-col cols="12" sm="6">
+          <v-divider class="my-3"></v-divider>
+          <div class="text-subtitle-1 font-weight-bold text-primary mb-3 d-flex align-center">
+            <v-icon start size="20">mdi-file-sign</v-icon> Firma Digital
+          </div>
+          <v-row>
+            <v-col cols="12" sm="6" class="text-center">
+              <div v-if="selectedUser.tx_signature">
                 <v-img
                   :src="selectedUser.tx_signature"
-                  max-height="120"
+                  max-height="140"
+                  max-width="250"
                   contain
-                  class="border rounded-lg pa-2"
+                  class="border rounded-lg pa-2 mx-auto"
                   style="background: white;"
                 ></v-img>
-              </v-col>
-            </v-row>
-          </template>
+                <v-chip color="success" variant="tonal" size="x-small" class="mt-2">
+                  <v-icon start size="12">mdi-check-circle</v-icon> Firma registrada
+                </v-chip>
+              </div>
+              <div v-else class="pa-4 bg-grey-lighten-4 rounded-lg">
+                <v-icon size="40" color="grey-lighten-2">mdi-file-sign</v-icon>
+                <p class="text-caption text-grey mt-1 mb-0">Sin firma registrada</p>
+              </div>
+            </v-col>
+          </v-row>
 
           <!-- Información del Sistema -->
           <v-divider class="my-3"></v-divider>
