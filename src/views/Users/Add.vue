@@ -429,6 +429,19 @@ const submit = async () => {
     return;
   }
 
+  // Si el usuario dibujó una firma pero no la confirmó, auto-confirmarla ahora
+  if (signatureDrawn.value && !signatureConfirmed.value) {
+    const canvas = signatureCanvas.value;
+    if (canvas) {
+      form.value.tx_signature = canvas.toDataURL('image/png');
+      signatureConfirmed.value = true;
+    }
+  }
+
+  // DEBUG: Verificar que la firma está en el form antes de enviar
+  const sigLen = form.value.tx_signature ? form.value.tx_signature.length : 0;
+  console.log('[DEBUG] Enviando usuario. Firma length:', sigLen, 'Primeros 50 chars:', form.value.tx_signature?.substring(0, 50));
+
   isSubmitting.value = true;
 
   // Convertir array de certificaciones a string separado por comas para DB

@@ -331,6 +331,7 @@ const confirmSignature = async () => {
     
     if (response.data.status) {
       existingSignature.value = response.data.tx_signature;
+      form.value.tx_signature = response.data.tx_signature;
       notify('success', 'Firma subida correctamente');
     } else {
       notify('error', response.data.msg || 'Error al subir la firma');
@@ -388,11 +389,13 @@ onMounted(async () => {
       form.value = {
         ...u,
         tx_phone: cleanPhone,
-        // Convertimos a Number para que coincida con el item-value de roles
-        id_rol: u.id_rol ? String(u.id_rol) : null,
+        // id_rol debe ser Number para coincidir con item-value="id" del v-select
+        id_rol: u.id_rol ? Number(u.id_rol) : null,
         tx_graduation_year: u.tx_graduation_year ? Number(u.tx_graduation_year) : null,
         // Forzamos String para que el select de Activo/Inactivo funcione correctamente
-        in_status: String(u.in_status)
+        in_status: String(u.in_status),
+        // Asegurar que la firma se mantenga actualizada en el form
+        tx_signature: u.tx_signature || ''
       };
     }
   } catch (error) {
