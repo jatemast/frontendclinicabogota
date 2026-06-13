@@ -357,6 +357,51 @@
             </v-row>
         </div>
 
+        <!-- Overlay de progreso de subida -->
+        <v-overlay
+            v-model="showProgressOverlay"
+            persistent
+            contained
+            class="align-center justify-center"
+        >
+            <v-card width="420" rounded="xl" class="pa-6 mx-4">
+                <div class="text-center mb-4">
+                    <v-icon size="48" color="primary" class="mb-2">{{ progressIcon }}</v-icon>
+                    <h3 class="text-h6 font-weight-bold">{{ progressTitle }}</h3>
+                    <p class="text-caption text-grey mt-1">{{ progressMessage }}</p>
+                </div>
+
+                <v-progress-linear
+                    :model-value="uploadProgress"
+                    color="primary"
+                    height="10"
+                    rounded
+                    striped
+                    class="mb-4"
+                ></v-progress-linear>
+
+                <div class="d-flex justify-space-between text-caption text-grey mb-2">
+                    <span>{{ progressDetail }}</span>
+                    <span class="font-weight-bold">{{ uploadProgress }}%</span>
+                </div>
+
+                <!-- Detalle de imágenes -->
+                <div class="mt-2 text-caption text-grey">
+                    <div v-if="totalImages > 0">
+                        <v-icon start size="14">mdi-camera</v-icon>
+                        {{ totalImages }} imagen(es) para subir
+                    </div>
+                </div>
+
+                <div class="mt-4 text-center">
+                    <v-chip color="primary" variant="tonal" size="small">
+                        <v-icon start>mdi-clock-outline</v-icon>
+                        No cierre esta ventana
+                    </v-chip>
+                </div>
+            </v-card>
+        </v-overlay>
+
         <v-footer v-if="step === 2 && !loading" app class="d-md-none pa-4 bg-white border-t">
             <v-btn block size="x-large" color="primary" class="btn-gradient" :loading="isSubmitting" :disabled="!form.tx_motivo_consulta" @click="submitHistory">
                 <v-icon start>mdi-content-save-check</v-icon> CREAR HISTORIA MÉDICA
@@ -630,10 +675,71 @@ const filteredCotys = computed(() => {
     );
 });
 
+// --- Progreso de subida ---
+const showProgressOverlay = ref(false);
+const uploadProgress = ref(0);
+const progressTitle = ref('Guardando...');
+const progressMessage = ref('Preparando datos');
+const progressDetail = ref('');
+const progressIcon = ref('mdi-cloud-upload');
+let progressInterval: ReturnType<typeof setInterval> | null = null;
+
+const totalImages = computed(() => {
+    return form.value.tx_img_before.length + form.value.tx_img_after.length;
+});
+
+const startProgressSimulation = () => {
+    uploadProgress.value = 0;
+    let phase = 0;
+    
+    progressInterval = setInterval(() => {
+        uploadProgress.value += 1;
+        
+        if (uploadProgress.value <= 25) {
+            progressTitle.value = 'Preparando datos...';
+            progressMessage.value = 'Organizando información de la historia clínica';
+            progressIcon.value = 'mdi-file-document-edit';
+        } else if (uploadProgress.value <= 50) {
+            progressTitle.value = 'Subiendo imágenes...';
+            progressMessage.value = 'Cargando fotos ANTES y DESPUÉS al servidor';
+            progressIcon.value = 'mdi-camera';
+            progressDetail.value = `${totalImages.value} imagen(es) en proceso`;
+        } else if (uploadProgress.value <= 75) {
+            progressTitle.value = 'Procesando...';
+            progressMessage.value = 'El servidor está almacenando las imágenes en ImgBB';
+            progressIcon.value = 'mdi-cloud-sync';
+        } else if (uploadProgress.value <= 90) {
+            progressTitle.value = 'Finalizando...';
+            progressMessage.value = 'Registrando historia clínica y firma digital';
+            progressIcon.value = 'mdi-check-circle';
+        }
+        
+        if (uploadProgress.value >= 90) {
+            if (progressInterval) clearInterval(progressInterval);
+            progressInterval = null;
+        }
+    }, 120);
+};
+
+const completeProgress = () => {
+    if (progressInterval) {
+        clearInterval(progressInterval);
+        progressInterval = null;
+    }
+    uploadProgress.value = 100;
+    progressTitle.value = '¡Completado!';
+    progressMessage.value = 'Historia clínica guardada exitosamente';
+    progressIcon.value = 'mdi-check-circle';
+    progressDetail.value = '';
+};
+
 const submitHistory = async () => {
     if (!form.value.tx_motivo_consulta) return;
     
     isSubmitting.value = true;
+    showProgressOverlay.value = true;
+    startProgressSimulation();
+    
     try {
         // Construir el payload: enviar arrays de imágenes base64
         const payload: any = {
@@ -646,21 +752,40 @@ const submitHistory = async () => {
 
         // Crear historia clínica (el backend sube las imágenes a ImgBB internamente)
         const response = await axios.post(`${import.meta.env.VITE_API_URL}medicalhistory/add`, payload);
+        
+        // Completar barra al 100%
+        completeProgress();
+        await new Promise(resolve => setTimeout(resolve, 600));
+        
         if (response.data.status) {
+            showProgressOverlay.value = false;
             notify('success', response.data.msg || response.data.data || 'Historia clínica creada exitosamente');
-            // Redirigir al listado de historias clínicas después del toast
             setTimeout(() => {
                 router.push('/medical-history');
             }, 800);
         } else {
+            showProgressOverlay.value = false;
             notify('error', response.data.msg || response.data.data || 'Error al iniciar historia clínica');
         }
     } catch (error) {
+        showProgressOverlay.value = false;
         notify('error', 'Error al guardar');
     } finally {
+        if (progressInterval) {
+            clearInterval(progressInterval);
+            progressInterval = null;
+        }
         isSubmitting.value = false;
     }
 };
+
+// Limpiar intervalo al desmontar
+onBeforeUnmount(() => {
+    if (progressInterval) {
+        clearInterval(progressInterval);
+        progressInterval = null;
+    }
+});
 </script>
 
 <style scoped>
