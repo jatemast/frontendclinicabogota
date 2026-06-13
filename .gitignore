@@ -48,6 +48,17 @@ Thumbs.db
 *.mov
 *.wmv
 
+# Environment variables (sensitive)
+.env
+.env.local
+.env.*.local
+
+# Build artifacts
+dist.zip
+
+# Stack dump files
+*.stackdump
+
 branch_structure.json
 temp_auto_push.bat
 temp_interactive_push.bat
