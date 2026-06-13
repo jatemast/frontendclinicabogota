@@ -1810,16 +1810,16 @@ const updateSection = async (sectionName) => {
     saving.value = sectionName;
     try {
         if (sectionName === 'resumen' && beforePreviews.value.length > 0) {
-            // Enviar array de imágenes base64 al backend
-            history.value.tx_img_before = beforePreviews.value;
+            const allBeforeImages = [...beforeImages.value, ...beforePreviews.value];
+            history.value.tx_img_before = allBeforeImages.length > 0 ? allBeforeImages : null;
             beforeFiles.value = [];
             beforePreviews.value = [];
             if (beforeFileInputRef.value) beforeFileInputRef.value.value = '';
         }
 
-        if (sectionName === 'resumen' && afterPreviews.value.length > 0) {
-            // Enviar array de imágenes base64 al backend
-            history.value.tx_img_after = afterPreviews.value;
+        if (sectionName === 'resumen' && (afterPreviews.value.length > 0 || afterImages.value.length > 0)) {
+            const allAfterImages = [...afterImages.value, ...afterPreviews.value];
+            history.value.tx_img_after = allAfterImages.length > 0 ? allAfterImages : null;
             afterFiles.value = [];
             afterPreviews.value = [];
             if (afterFileInputRef.value) afterFileInputRef.value.value = '';
