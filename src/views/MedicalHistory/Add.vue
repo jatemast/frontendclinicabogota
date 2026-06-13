@@ -154,59 +154,122 @@
                             </v-alert>
                         </div>
 
-                        <!-- Imagen ANTES del procedimiento estético -->
+                        <!-- Imágenes ANTES del procedimiento estético -->
                         <v-divider class="mb-4"></v-divider>
-                        <v-label class="font-weight-bold mb-2 text-primary text-uppercase">
-                            <v-icon start>mdi-camera</v-icon> Foto ANTES del procedimiento
+                        <v-label class="font-weight-bold mb-3 text-primary text-uppercase">
+                            <v-icon start>mdi-camera</v-icon> Fotos ANTES del procedimiento
                         </v-label>
                         <div class="mb-4">
-                            <v-row align="center">
-                                <v-col cols="12" sm="6">
-                                    <v-btn
-                                        color="primary"
-                                        variant="tonal"
-                                        prepend-icon="mdi-camera-plus"
-                                        @click="triggerFileInput"
-                                        block
-                                        rounded="lg"
-                                    >
-                                        {{ imageBeforeFile ? 'Cambiar imagen' : 'Tomar o seleccionar foto' }}
-                                    </v-btn>
-                                    <input
-                                        ref="fileInputRef"
-                                        type="file"
-                                        accept="image/*"
-                                        capture="environment"
-                                        style="display: none"
-                                        @change="onImageBeforeSelected"
-                                    />
-                                </v-col>
-                                <v-col cols="12" sm="6" class="text-center">
-                                    <v-chip v-if="imageBeforePreview" color="success" variant="tonal" size="small">
-                                        <v-icon start>mdi-check-circle</v-icon> Foto seleccionada
-                                    </v-chip>
-                                    <span v-else class="text-caption text-grey">Ninguna foto seleccionada</span>
-                                </v-col>
-                            </v-row>
-                            <!-- Preview de la imagen antes -->
-                            <v-row v-if="imageBeforePreview" class="mt-2">
-                                <v-col cols="12" class="text-center">
-                                    <v-img
-                                        :src="imageBeforePreview"
-                                        max-height="250"
-                                        contain
-                                        class="rounded-lg border"
-                                    ></v-img>
-                                    <v-btn
-                                        size="x-small"
-                                        color="error"
-                                        variant="text"
-                                        icon="mdi-close-circle"
-                                        class="mt-1"
-                                        @click="removeImageBefore"
-                                    ></v-btn>
+                            <!-- Previews de imágenes ANTES -->
+                            <v-row v-if="imagesBefore.length > 0" class="mb-3">
+                                <v-col
+                                    v-for="(img, idx) in imagesBefore"
+                                    :key="'before-' + idx"
+                                    cols="6" sm="4" md="3"
+                                >
+                                    <div class="image-preview-card">
+                                        <v-img
+                                            :src="img.preview"
+                                            cover
+                                            aspect-ratio="1"
+                                            class="rounded-lg border"
+                                        >
+                                            <div class="image-overlay">
+                                                <v-btn
+                                                    icon="mdi-close-circle"
+                                                    size="x-small"
+                                                    color="error"
+                                                    variant="flat"
+                                                    @click="removeImageBefore(idx)"
+                                                ></v-btn>
+                                            </div>
+                                        </v-img>
+                                        <div class="text-caption text-center mt-1 text-grey">Antes #{{ idx + 1 }}</div>
+                                    </div>
                                 </v-col>
                             </v-row>
+                            <!-- Botón para agregar más imágenes ANTES -->
+                            <v-btn
+                                color="primary"
+                                variant="tonal"
+                                prepend-icon="mdi-camera-plus"
+                                @click="triggerFileInput('before')"
+                                rounded="lg"
+                                :block="imagesBefore.length === 0"
+                            >
+                                {{ imagesBefore.length > 0 ? 'Agregar otra foto ANTES' : 'Tomar o seleccionar foto ANTES' }}
+                            </v-btn>
+                            <input
+                                ref="fileInputBeforeRef"
+                                type="file"
+                                accept="image/*"
+                                capture="environment"
+                                multiple
+                                style="display: none"
+                                @change="onMultipleImagesSelected($event, 'before')"
+                            />
+                            <div v-if="imagesBefore.length === 0" class="text-caption text-grey text-center mt-2">
+                                Ninguna foto seleccionada
+                            </div>
+                        </div>
+
+                        <!-- Imágenes DESPUÉS del procedimiento estético -->
+                        <v-divider class="mb-4"></v-divider>
+                        <v-label class="font-weight-bold mb-3 text-primary text-uppercase">
+                            <v-icon start>mdi-camera</v-icon> Fotos DESPUÉS del procedimiento
+                        </v-label>
+                        <div class="mb-4">
+                            <!-- Previews de imágenes DESPUÉS -->
+                            <v-row v-if="imagesAfter.length > 0" class="mb-3">
+                                <v-col
+                                    v-for="(img, idx) in imagesAfter"
+                                    :key="'after-' + idx"
+                                    cols="6" sm="4" md="3"
+                                >
+                                    <div class="image-preview-card">
+                                        <v-img
+                                            :src="img.preview"
+                                            cover
+                                            aspect-ratio="1"
+                                            class="rounded-lg border"
+                                        >
+                                            <div class="image-overlay">
+                                                <v-btn
+                                                    icon="mdi-close-circle"
+                                                    size="x-small"
+                                                    color="error"
+                                                    variant="flat"
+                                                    @click="removeImageAfter(idx)"
+                                                ></v-btn>
+                                            </div>
+                                        </v-img>
+                                        <div class="text-caption text-center mt-1 text-grey">Después #{{ idx + 1 }}</div>
+                                    </div>
+                                </v-col>
+                            </v-row>
+                            <!-- Botón para agregar más imágenes DESPUÉS -->
+                            <v-btn
+                                color="secondary"
+                                variant="tonal"
+                                prepend-icon="mdi-image-plus"
+                                @click="triggerFileInput('after')"
+                                rounded="lg"
+                                :block="imagesAfter.length === 0"
+                            >
+                                {{ imagesAfter.length > 0 ? 'Agregar otra foto DESPUÉS' : 'Tomar o seleccionar foto DESPUÉS' }}
+                            </v-btn>
+                            <input
+                                ref="fileInputAfterRef"
+                                type="file"
+                                accept="image/*"
+                                capture="environment"
+                                multiple
+                                style="display: none"
+                                @change="onMultipleImagesSelected($event, 'after')"
+                            />
+                            <div v-if="imagesAfter.length === 0" class="text-caption text-grey text-center mt-2">
+                                Ninguna foto seleccionada
+                            </div>
                         </div>
 
                         <!-- FIRMA DIGITAL -->
@@ -327,36 +390,61 @@ const doctorData = ref<any>(null);
 const form = ref({
     id_coty: '',
     tx_motivo_consulta: '',
-    tx_img_before: '',
+    tx_img_before: [] as string[],
+    tx_img_after: [] as string[],
     tx_signature: ''
 });
 
-// --- Imagen ANTES ---
-const fileInputRef = ref<HTMLInputElement | null>(null);
-const imageBeforeFile = ref<File | null>(null);
-const imageBeforePreview = ref<string>('');
+// --- Imágenes ANTES y DESPUÉS (múltiples) ---
+interface ImageEntry {
+    file: File | null;
+    preview: string;       // base64 para preview local
+}
+const fileInputBeforeRef = ref<HTMLInputElement | null>(null);
+const fileInputAfterRef = ref<HTMLInputElement | null>(null);
+const imagesBefore = ref<ImageEntry[]>([]);
+const imagesAfter = ref<ImageEntry[]>([]);
 
-const triggerFileInput = () => {
-    fileInputRef.value?.click();
-};
-
-const onImageBeforeSelected = (event: Event) => {
-    const target = event.target as HTMLInputElement;
-    if (target.files && target.files[0]) {
-        imageBeforeFile.value = target.files[0];
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            imageBeforePreview.value = e.target?.result as string;
-        };
-        reader.readAsDataURL(target.files[0]);
+const triggerFileInput = (type: 'before' | 'after') => {
+    if (type === 'before') {
+        fileInputBeforeRef.value?.click();
+    } else {
+        fileInputAfterRef.value?.click();
     }
 };
 
-const removeImageBefore = () => {
-    imageBeforeFile.value = null;
-    imageBeforePreview.value = '';
-    form.value.tx_img_before = '';
-    if (fileInputRef.value) fileInputRef.value.value = '';
+const onMultipleImagesSelected = (event: Event, type: 'before' | 'after') => {
+    const target = event.target as HTMLInputElement;
+    if (target.files && target.files.length > 0) {
+        const targetArray = type === 'before' ? imagesBefore : imagesAfter;
+        // Procesar cada archivo seleccionado
+        Array.from(target.files).forEach((file) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const preview = e.target?.result as string;
+                targetArray.value.push({ file, preview });
+                // Actualizar el array en el form para envío
+                if (type === 'before') {
+                    form.value.tx_img_before.push(preview);
+                } else {
+                    form.value.tx_img_after.push(preview);
+                }
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+    // Limpiar el input para permitir re-seleccionar los mismos archivos
+    target.value = '';
+};
+
+const removeImageBefore = (idx: number) => {
+    imagesBefore.value.splice(idx, 1);
+    form.value.tx_img_before.splice(idx, 1);
+};
+
+const removeImageAfter = (idx: number) => {
+    imagesAfter.value.splice(idx, 1);
+    form.value.tx_img_after.splice(idx, 1);
 };
 
 // --- FIRMA DIGITAL ---
@@ -509,6 +597,14 @@ const selectCoty = async (coty: any) => {
     step.value = 2;
     window.scrollTo(0, 0);
     
+    // Reiniciar imágenes y firma al seleccionar nueva cotización
+    imagesBefore.value = [];
+    imagesAfter.value = [];
+    form.value.tx_img_before = [];
+    form.value.tx_img_after = [];
+    form.value.tx_signature = '';
+    clearSignature();
+    
     // Cargar procedimientos de esta cotización específica
     loadingProcedures.value = true;
     procedures.value = [];
@@ -539,18 +635,25 @@ const submitHistory = async () => {
     
     isSubmitting.value = true;
     try {
-        // Asignar la imagen en base64 directamente (el backend la subirá a ImgBB)
-        if (imageBeforePreview.value) {
-            form.value.tx_img_before = imageBeforePreview.value;
-        }
+        // Construir el payload: enviar arrays de imágenes base64
+        const payload: any = {
+            id_coty: form.value.id_coty,
+            tx_motivo_consulta: form.value.tx_motivo_consulta,
+            tx_img_before: form.value.tx_img_before.length > 0 ? form.value.tx_img_before : undefined,
+            tx_img_after: form.value.tx_img_after.length > 0 ? form.value.tx_img_after : undefined,
+            tx_signature: form.value.tx_signature || undefined,
+        };
 
         // Crear historia clínica (el backend sube las imágenes a ImgBB internamente)
-        const response = await axios.post(`${import.meta.env.VITE_API_URL}medicalhistory/add`, form.value);
+        const response = await axios.post(`${import.meta.env.VITE_API_URL}medicalhistory/add`, payload);
         if (response.data.status) {
-            notify('success', response.data.msg || 'Historia clínica iniciada');
-            router.push('/medical-history');
+            notify('success', response.data.msg || response.data.data || 'Historia clínica creada exitosamente');
+            // Redirigir al listado de historias clínicas después del toast
+            setTimeout(() => {
+                router.push('/medical-history');
+            }, 800);
         } else {
-            notify('error', response.data.msg || 'Error al iniciar historia clínica');
+            notify('error', response.data.msg || response.data.data || 'Error al iniciar historia clínica');
         }
     } catch (error) {
         notify('error', 'Error al guardar');
@@ -567,6 +670,16 @@ const submitHistory = async () => {
 .doctor-info-card { background: linear-gradient(135deg, #f8f9ff 0%, #eef1ff 100%); border: 1px solid #d0d5ff; border-left: 4px solid rgb(var(--v-theme-primary)); }
 .doctor-info-card .border-top { border-top: 1px solid #e0e0e0; }
 .btn-gradient { background: linear-gradient(45deg, rgb(var(--v-theme-primary)), #4db6ac) !important; color: white !important; }
+
+.image-preview-card {
+    position: relative;
+}
+.image-preview-card .image-overlay {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    z-index: 1;
+}
 
 .signature-container {
     position: relative;

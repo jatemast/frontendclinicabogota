@@ -112,133 +112,107 @@
                                 {{ proc.tx_name }}
                             </v-chip>
 
-                        <!-- ===== IMAGEN ANTES DEL PROCEDIMIENTO ===== -->
+                        <!-- ===== IMÁGENES ANTES DEL PROCEDIMIENTO ===== -->
                         <v-divider class="my-4"></v-divider>
                         <div class="text-overline text-primary mb-2">
-                            <v-icon start size="14">mdi-camera-before</v-icon> Foto ANTES del procedimiento
+                            <v-icon start size="14">mdi-camera</v-icon> Fotos ANTES del procedimiento ({{ beforeImages.length }})
                         </div>
-                        <v-row>
-                            <v-col cols="12" md="6">
-                                <div v-if="history.tx_img_before" class="text-center">
-                                    <v-img
-                                        :src="history.tx_img_before"
-                                        max-height="250"
-                                        contain
-                                        class="rounded-lg border mb-2"
-                                    ></v-img>
-                                    <v-btn
-                                        size="small"
-                                        color="primary"
-                                        variant="tonal"
-                                        :href="history.tx_img_before"
-                                        target="_blank"
-                                        prepend-icon="mdi-open-in-new"
-                                    >Ver original</v-btn>
-                                </div>
-                                <div v-else class="text-center pa-6 bg-grey-lighten-4 rounded-lg">
-                                    <v-icon size="48" color="grey-lighten-2">mdi-image-off</v-icon>
-                                    <p class="text-caption text-grey mt-1">No hay foto registrada</p>
-                                </div>
+                        <v-row v-if="beforeImages.length > 0">
+                            <v-col v-for="(img, idx) in beforeImages" :key="'before-'+idx" cols="6" sm="4" md="3">
+                                <v-img
+                                    :src="img"
+                                    cover
+                                    aspect-ratio="1"
+                                    class="rounded-lg border cursor-pointer"
+                                    @click="openPhotoPreview(img)"
+                                ></v-img>
                             </v-col>
-                            <v-col cols="12" md="6" class="d-flex flex-column align-center justify-center">
+                        </v-row>
+                        <div v-else class="text-center pa-6 bg-grey-lighten-4 rounded-lg">
+                            <v-icon size="48" color="grey-lighten-2">mdi-image-off</v-icon>
+                            <p class="text-caption text-grey mt-1">No hay fotos registradas</p>
+                        </div>
+                        <v-row class="mt-2">
+                            <v-col cols="12" class="d-flex ga-2">
                                 <v-btn
                                     color="primary"
                                     variant="tonal"
                                     prepend-icon="mdi-camera-plus"
+                                    size="small"
                                     @click="triggerBeforeFileInput"
-                                    block
                                     rounded="lg"
-                                    class="mb-2"
                                 >
-                                    {{ beforeFile ? 'Cambiar foto' : (history.tx_img_before ? 'Actualizar foto' : 'Subir foto del antes') }}
+                                    {{ beforePreviews.length > 0 ? 'Agregar más' : 'Agregar foto ANTES' }}
                                 </v-btn>
-                                <input
-                                    ref="beforeFileInputRef"
-                                    type="file"
-                                    accept="image/*"
-                                    capture="environment"
-                                    style="display: none"
-                                    @change="onBeforeImageSelected"
-                                />
-                                <v-chip v-if="beforePreview" color="success" variant="tonal" size="small">
-                                    <v-icon start>mdi-check-circle</v-icon> Nueva foto lista para guardar
+                                <v-chip v-if="beforePreviews.length > 0" color="success" variant="tonal" size="small">
+                                    <v-icon start>mdi-check-circle</v-icon> {{ beforePreviews.length }} nueva(s) por guardar
                                 </v-chip>
                             </v-col>
                         </v-row>
-                        <!-- Preview de la nueva imagen antes -->
-                        <v-row v-if="beforePreview">
-                            <v-col cols="12" class="text-center">
-                                <v-img
-                                    :src="beforePreview"
-                                    max-height="200"
-                                    contain
-                                    class="rounded-lg border"
-                                ></v-img>
+                        <input
+                            ref="beforeFileInputRef"
+                            type="file"
+                            accept="image/*"
+                            capture="environment"
+                            multiple
+                            style="display: none"
+                            @change="onBeforeImagesSelected"
+                        />
+                        <v-row v-if="beforePreviews.length > 0" dense class="mt-2">
+                            <v-col v-for="(preview, idx) in beforePreviews" :key="'bprev-'+idx" cols="4" sm="3">
+                                <v-img :src="preview" cover aspect-ratio="1" class="rounded-lg border"></v-img>
                             </v-col>
                         </v-row>
 
-                        <!-- ===== IMAGEN DESPUÉS DEL PROCEDIMIENTO ===== -->
+                        <!-- ===== IMÁGENES DESPUÉS DEL PROCEDIMIENTO ===== -->
                         <v-divider class="my-4"></v-divider>
                         <div class="text-overline text-primary mb-2">
-                            <v-icon start size="14">mdi-camera-after</v-icon> Foto DESPUÉS del procedimiento
+                            <v-icon start size="14">mdi-camera</v-icon> Fotos DESPUÉS del procedimiento ({{ afterImages.length }})
                         </div>
-                        <v-row>
-                            <v-col cols="12" md="6">
-                                <div v-if="history.tx_img_after" class="text-center">
-                                    <v-img
-                                        :src="history.tx_img_after"
-                                        max-height="250"
-                                        contain
-                                        class="rounded-lg border mb-2"
-                                    ></v-img>
-                                    <v-btn
-                                        size="small"
-                                        color="primary"
-                                        variant="tonal"
-                                        :href="history.tx_img_after"
-                                        target="_blank"
-                                        prepend-icon="mdi-open-in-new"
-                                    >Ver original</v-btn>
-                                </div>
-                                <div v-else class="text-center pa-6 bg-grey-lighten-4 rounded-lg">
-                                    <v-icon size="48" color="grey-lighten-2">mdi-image-plus</v-icon>
-                                    <p class="text-caption text-grey mt-1">Aún no se ha registrado foto del después</p>
-                                </div>
+                        <v-row v-if="afterImages.length > 0">
+                            <v-col v-for="(img, idx) in afterImages" :key="'after-'+idx" cols="6" sm="4" md="3">
+                                <v-img
+                                    :src="img"
+                                    cover
+                                    aspect-ratio="1"
+                                    class="rounded-lg border cursor-pointer"
+                                    @click="openPhotoPreview(img)"
+                                ></v-img>
                             </v-col>
-                            <v-col cols="12" md="6" class="d-flex flex-column align-center justify-center">
+                        </v-row>
+                        <div v-else class="text-center pa-6 bg-grey-lighten-4 rounded-lg">
+                            <v-icon size="48" color="grey-lighten-2">mdi-image-plus</v-icon>
+                            <p class="text-caption text-grey mt-1">Aún no hay fotos del después</p>
+                        </div>
+                        <v-row class="mt-2">
+                            <v-col cols="12" class="d-flex ga-2">
                                 <v-btn
-                                    color="primary"
+                                    color="secondary"
                                     variant="tonal"
-                                    prepend-icon="mdi-camera-plus"
+                                    prepend-icon="mdi-image-plus"
+                                    size="small"
                                     @click="triggerAfterFileInput"
-                                    block
                                     rounded="lg"
-                                    class="mb-2"
                                 >
-                                    {{ afterFile ? 'Cambiar foto' : (history.tx_img_after ? 'Actualizar foto' : 'Subir foto del después') }}
+                                    {{ afterPreviews.length > 0 ? 'Agregar más' : 'Agregar foto DESPUÉS' }}
                                 </v-btn>
-                                <input
-                                    ref="afterFileInputRef"
-                                    type="file"
-                                    accept="image/*"
-                                    capture="environment"
-                                    style="display: none"
-                                    @change="onAfterImageSelected"
-                                />
-                                <v-chip v-if="afterPreview" color="success" variant="tonal" size="small">
-                                    <v-icon start>mdi-check-circle</v-icon> Nueva foto lista para guardar
+                                <v-chip v-if="afterPreviews.length > 0" color="success" variant="tonal" size="small">
+                                    <v-icon start>mdi-check-circle</v-icon> {{ afterPreviews.length }} nueva(s) por guardar
                                 </v-chip>
                             </v-col>
                         </v-row>
-                        <!-- Preview de la nueva imagen después -->
-                        <v-row v-if="afterPreview">
-                            <v-col cols="12" class="text-center">
-                                <v-img
-                                    :src="afterPreview"
-                                    max-height="200"
-                                    contain
-                                    class="rounded-lg border"
-                                ></v-img>
+                        <input
+                            ref="afterFileInputRef"
+                            type="file"
+                            accept="image/*"
+                            capture="environment"
+                            multiple
+                            style="display: none"
+                            @change="onAfterImagesSelected"
+                        />
+                        <v-row v-if="afterPreviews.length > 0" dense class="mt-2">
+                            <v-col v-for="(preview, idx) in afterPreviews" :key="'aprev-'+idx" cols="4" sm="3">
+                                <v-img :src="preview" cover aspect-ratio="1" class="rounded-lg border"></v-img>
                             </v-col>
                         </v-row>
 
@@ -1390,46 +1364,85 @@ const loadingHabits = ref(false);
 const newHabit = ref('');
 const savingHabit = ref(false);
 
-// --- Imagen ANTES ---
+// --- Computed: parsear JSON arrays de imágenes almacenadas ---
+const beforeImages = computed(() => {
+    if (!history.value?.tx_img_before) return [];
+    const raw = history.value.tx_img_before;
+    // Si ya es un array (porque el backend lo devolvió parseado), usarlo directamente
+    if (Array.isArray(raw)) return raw;
+    // Si es string JSON, parsearlo
+    if (typeof raw === 'string') {
+        try {
+            const parsed = JSON.parse(raw);
+            return Array.isArray(parsed) ? parsed : [raw];
+        } catch {
+            return [raw]; // URL única (compatibilidad)
+        }
+    }
+    return [];
+});
+
+const afterImages = computed(() => {
+    if (!history.value?.tx_img_after) return [];
+    const raw = history.value.tx_img_after;
+    if (Array.isArray(raw)) return raw;
+    if (typeof raw === 'string') {
+        try {
+            const parsed = JSON.parse(raw);
+            return Array.isArray(parsed) ? parsed : [raw];
+        } catch {
+            return [raw];
+        }
+    }
+    return [];
+});
+
+// --- Imágenes ANTES (múltiples) ---
 const beforeFileInputRef = ref(null);
-const beforeFile = ref(null);
-const beforePreview = ref('');
+const beforeFiles = ref([]);
+const beforePreviews = ref([]);
 
 const triggerBeforeFileInput = () => {
     beforeFileInputRef.value?.click();
 };
 
-const onBeforeImageSelected = (event) => {
+const onBeforeImagesSelected = (event) => {
     const target = event.target;
-    if (target.files && target.files[0]) {
-        beforeFile.value = target.files[0];
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            beforePreview.value = e.target?.result;
-        };
-        reader.readAsDataURL(target.files[0]);
+    if (target.files && target.files.length > 0) {
+        Array.from(target.files).forEach((file) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                beforePreviews.value.push(e.target?.result);
+                beforeFiles.value.push(file);
+            };
+            reader.readAsDataURL(file);
+        });
     }
+    target.value = '';
 };
 
-// --- Imagen DESPUÉS ---
+// --- Imágenes DESPUÉS (múltiples) ---
 const afterFileInputRef = ref(null);
-const afterFile = ref(null);
-const afterPreview = ref('');
+const afterFiles = ref([]);
+const afterPreviews = ref([]);
 
 const triggerAfterFileInput = () => {
     afterFileInputRef.value?.click();
 };
 
-const onAfterImageSelected = (event) => {
+const onAfterImagesSelected = (event) => {
     const target = event.target;
-    if (target.files && target.files[0]) {
-        afterFile.value = target.files[0];
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            afterPreview.value = e.target?.result;
-        };
-        reader.readAsDataURL(target.files[0]);
+    if (target.files && target.files.length > 0) {
+        Array.from(target.files).forEach((file) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                afterPreviews.value.push(e.target?.result);
+                afterFiles.value.push(file);
+            };
+            reader.readAsDataURL(file);
+        });
     }
+    target.value = '';
 };
 
 // --- FIRMA DIGITAL (Canvas con mouse/touch) ---
@@ -1796,17 +1809,19 @@ const calculateIMC = () => {
 const updateSection = async (sectionName) => {
     saving.value = sectionName;
     try {
-        if (sectionName === 'resumen' && beforePreview.value) {
-            history.value.tx_img_before = beforePreview.value;
-            beforeFile.value = null;
-            beforePreview.value = '';
+        if (sectionName === 'resumen' && beforePreviews.value.length > 0) {
+            // Enviar array de imágenes base64 al backend
+            history.value.tx_img_before = beforePreviews.value;
+            beforeFiles.value = [];
+            beforePreviews.value = [];
             if (beforeFileInputRef.value) beforeFileInputRef.value.value = '';
         }
 
-        if (sectionName === 'resumen' && afterPreview.value) {
-            history.value.tx_img_after = afterPreview.value;
-            afterFile.value = null;
-            afterPreview.value = '';
+        if (sectionName === 'resumen' && afterPreviews.value.length > 0) {
+            // Enviar array de imágenes base64 al backend
+            history.value.tx_img_after = afterPreviews.value;
+            afterFiles.value = [];
+            afterPreviews.value = [];
             if (afterFileInputRef.value) afterFileInputRef.value.value = '';
         }
 
