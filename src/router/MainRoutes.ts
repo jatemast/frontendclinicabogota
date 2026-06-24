@@ -102,6 +102,24 @@ const MainRoutes = {
             module: 'Listado de Cotizaciones'
           }
         },
+        {
+          name: 'CotyPrint',
+          path: '/quotes-print/:id',
+          component: () => import('@/views/Coty/CotyPrint.vue'),
+          meta: {
+            requiresAuth: true,
+            module: 'Impresion de Cotizacion'
+          }
+        },
+        {
+          name: 'CotyConfig',
+          path: '/quotes/config',
+          component: () => import('@/views/Coty/CotyConfig.vue'),
+          meta: {
+            requiresAuth: true,
+            module: 'Listado de Cotizaciones'
+          }
+        },
 
         // Medical History
         {

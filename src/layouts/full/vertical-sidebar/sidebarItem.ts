@@ -59,6 +59,13 @@ const sidebarItem: menu[] = [
     to: "/quotes",
     module: "Listado de Cotizaciones",
   },
+  {
+    title: "Configurar Cotización",
+    icon: SettingsIcon,
+    BgColor: 'primary',
+    to: "/quotes/config",
+    module: "Listado de Cotizaciones",
+  },
 
   { header: 'Agenda' },
 

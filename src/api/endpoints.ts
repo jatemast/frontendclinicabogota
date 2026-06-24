@@ -70,7 +70,11 @@ export const API = {
     ALL: `${BASE}api/coty/all`,
     ADD: `${BASE}quotes/add`,
     EDIT: (id: number | string) => `${BASE}quotes/edt/${id}`,
+    PRINT: (id: number | string) => `${BASE}quotes/print/${id}`,
     UPDATE: (id: number | string) => `${BASE}quotes/upd/${id}`,
+    STATUS: (id: number | string) => `${BASE}quotes/status/${id}`,
+    DOCTORS: `${BASE}quotes/doctors`,
+    CONFIG: `${BASE}quotes/config`,
   },
 
   // ============ HISTORIAS CLÍNICAS ============

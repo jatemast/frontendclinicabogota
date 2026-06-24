@@ -37,6 +37,14 @@ export const strongPassword = (value: string) => {
     || 'Debe tener al menos 8 caracteres, una letra mayúscula, un número y un carácter especial.';
 };
 
+export const minNumber = (min: number) => {
+  return (value: number) => (value == null || value >= min) || `Debe ser mayor o igual a ${min}`;
+};
+
+export const maxNumber = (max: number) => {
+  return (value: number) => (value == null || value <= max) || `Debe ser menor o igual a ${max}`;
+};
+
 export const matchPasswords = (getPassword: () => string) => {
   return (value: string) => value === getPassword() || 'Las contraseñas no coinciden';
 };
