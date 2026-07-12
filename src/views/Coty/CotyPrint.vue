@@ -38,13 +38,13 @@
           <h3 class="text-subtitle-1 font-weight-bold mb-3 text-secondary">DATOS DEL PACIENTE</h3>
           <v-row dense class="mb-6 patient-data-card">
             <v-col cols="12" sm="6">
-              <p class="text-body-2">**Nombre:** {{ quote.tx_first_name }} {{ quote.tx_last_name }}</p>
-              <p class="text-body-2">**Documento:** {{ quote.tx_dni_type }}-{{ quote.tx_dni }}</p>
+              <p class="text-body-2"><strong>Nombre:</strong> {{ quote.tx_first_name }} {{ quote.tx_last_name }}</p>
+              <p class="text-body-2"><strong>Documento:</strong> {{ quote.tx_dni_type }}-{{ quote.tx_dni }}</p>
             </v-col>
             <v-col cols="12" sm="6">
-              <p class="text-body-2">**Edad:** {{ getAge(quote.customer_birth) }} años</p>
-              <p class="text-body-2">**Teléfono:** {{ quote.customer_phone }}</p>
-              <p class="text-body-2">**Email:** {{ quote.customer_email }}</p>
+              <p class="text-body-2"><strong>Edad:</strong> {{ getAge(quote.customer_birth) }} años</p>
+              <p class="text-body-2"><strong>Teléfono:</strong> {{ quote.customer_phone }}</p>
+              <p class="text-body-2"><strong>Email:</strong> {{ quote.customer_email }}</p>
             </v-col>
           </v-row>
 
@@ -109,9 +109,9 @@
           <!-- CONDICIONES DE PAGO -->
           <h3 class="text-subtitle-1 font-weight-bold mb-3 text-secondary">CONDICIONES DE PAGO</h3>
           <div class="mb-6 detail-box">
-            <p class="text-body-2">**Forma de Pago:** {{ quote.tx_forma_pago || 'A convenir' }}</p>
-            <p class="text-body-2">**Validez de la Cotización:** {{ quote.in_validez_dias }} días a partir de la fecha de emisión.</p>
-            <p class="text-body-2">**Fecha de Vencimiento:** {{ formatDate(quote.date_vencimiento) }}</p>
+            <p class="text-body-2"><strong>Forma de Pago:</strong> {{ quote.tx_forma_pago || 'A convenir' }}</p>
+            <p class="text-body-2"><strong>Validez de la Cotización:</strong> {{ quote.in_validez_dias }} días a partir de la fecha de emisión.</p>
+            <p class="text-body-2"><strong>Fecha de Vencimiento:</strong> {{ formatDate(quote.date_vencimiento) }}</p>
           </div>
 
           <!-- CONDICIONES MÉDICAS Y LEGALES -->
@@ -135,7 +135,7 @@
             <p class="text-subtitle-1 font-weight-bold mb-1">Dr. {{ quote.doctor_first_name }} {{ quote.doctor_last_name }}</p>
             <p class="text-caption">Reg. Médico: {{ quote.doctor_registration || 'N/A' }}</p>
             <p class="text-caption">Especialidad: {{ quote.doctor_specialty || 'N/A' }}</p>
-            <p class="text-caption text-primary mt-2">**Firma Digital del Médico Responsable**</p>
+            <p class="text-caption text-primary mt-2 font-weight-bold">Firma Digital del Médico Responsable</p>
           </div>
 
         </v-card>
