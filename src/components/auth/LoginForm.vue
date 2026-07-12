@@ -31,6 +31,11 @@ const checkCameraHardware = async () => {
 
 onMounted(() => { checkCameraHardware(); });
 
+// Control para selector de empresa cuando hay usuarios duplicados
+const showBusinessSelector = ref(false);
+const businesses = ref<Array<{ id_business: string; tx_name: string }>>([]);
+const selectedBusinessId = ref<string | null>(null);
+
 const handleLogin = async () => {
     if (!tx_username.value || !tx_password.value) {
         notify('error', 'Por favor complete todos los campos');
@@ -38,26 +43,32 @@ const handleLogin = async () => {
     }
     loading.value = true;
     try {
-        const response = await axios.post(API.LOGIN, {
+        // Si estamos en modo selector de empresa, enviar id_business
+        const payload: any = {
             tx_username: tx_username.value,
             tx_password: tx_password.value
-        });
+        };
+        if (selectedBusinessId.value) {
+            payload.id_business = selectedBusinessId.value;
+        }
+
+        const response = await axios.post(API.LOGIN, payload);
 
         if (response.data.status) {
             notify('success', `¡Bienvenido, ${response.data.user_name}!`);
-            
+
             const expiration = Date.now() + response.data.expires_in * 1000;
             localStorage.setItem('token_expiration', expiration.toString());
             localStorage.setItem('is_logged_in', 'true');
             localStorage.setItem('id_business', response.data.id_business);
             localStorage.setItem('user_display', response.data.tx_username);
-            
+
             // Guardar token de acceso
             if (response.data.access_token) {
                 localStorage.setItem('access_token', response.data.access_token);
                 localStorage.setItem('token', response.data.access_token);
             }
-            
+
             // SaaS Admin
             localStorage.setItem('is_master', response.data.is_master ? 'true' : 'false');
             if (response.data.tx_photo) {
@@ -70,6 +81,11 @@ const handleLogin = async () => {
             await refreshPermissions();
 
             router.push('/dashboard');
+        } else if (response.data.multiple_businesses) {
+            // Usuario existe en múltiples empresas - mostrar selector
+            businesses.value = response.data.businesses || [];
+            showBusinessSelector.value = true;
+            notify('warning', response.data.msg);
         } else {
             notify('error', response.data.msg);
         }
@@ -109,6 +125,24 @@ const handleLogin = async () => {
             :append-inner-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
             @click:append-inner="showPassword = !showPassword"
         ></v-text-field>
+
+        <!-- Selector de empresa (visible solo si el usuario existe en múltiples empresas) -->
+        <div v-if="showBusinessSelector" class="mb-4">
+          <v-alert type="info" variant="tonal" density="compact" class="mb-3" rounded="lg">
+            Este usuario existe en múltiples empresas. Seleccione a cuál desea ingresar:
+          </v-alert>
+          <v-select
+            v-model="selectedBusinessId"
+            :items="businesses"
+            item-title="tx_name"
+            item-value="id_business"
+            label="Seleccionar Empresa"
+            variant="outlined"
+            density="comfortable"
+            prepend-inner-icon="mdi-office-building"
+            :rules="[v => !!v || 'Debe seleccionar una empresa']"
+          ></v-select>
+        </div>
 
         <div class="d-flex align-center justify-space-between mb-6">
             <v-checkbox label="Recuerdame" color="primary" hide-details density="compact"></v-checkbox>
