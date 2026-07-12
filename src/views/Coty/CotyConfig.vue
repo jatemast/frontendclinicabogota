@@ -129,6 +129,39 @@
             <template v-slot:action>
               <v-icon color="secondary">mdi-draw-pen</v-icon>
             </template>
+
+            <!-- Selector de doctor -->
+            <v-autocomplete
+              v-model="selectedDoctorId"
+              :items="doctors"
+              item-title="tx_full_name"
+              item-value="id"
+              label="Seleccionar Médico"
+              placeholder="Buscar médico por nombre..."
+              variant="outlined"
+              density="compact"
+              rounded="lg"
+              prepend-inner-icon="mdi-doctor"
+              clearable
+              class="mb-4"
+              @update:model-value="onDoctorSelected"
+            >
+              <template v-slot:item="{ props, item }">
+                <v-list-item v-bind="props" :subtitle="(item.raw.tx_specialty || 'Sin especialidad') + ' — Reg. ' + (item.raw.tx_medical_registration || 'N/A')">
+                  <template v-slot:prepend>
+                    <v-avatar color="primary-lighten-5" size="36">
+                      <span class="text-primary font-weight-bold text-caption">
+                        {{ item.raw.tx_first_name?.charAt(0) }}{{ item.raw.tx_last_name?.charAt(0) }}
+                      </span>
+                    </v-avatar>
+                  </template>
+                </v-list-item>
+              </template>
+              <template v-slot:chip="{ props, item }">
+                <v-chip v-bind="props" :text="item.raw.tx_first_name + ' ' + item.raw.tx_last_name"></v-chip>
+              </template>
+            </v-autocomplete>
+
             <v-row>
               <v-col cols="12" md="4" class="d-flex flex-column align-center justify-center border-md-right mb-4 mb-md-0">
                 <v-hover v-slot="{ isHovering, props }">
@@ -390,6 +423,16 @@ interface CotyConfig {
   date_upd?: string;
 }
 
+interface Doctor {
+  id: string;
+  tx_first_name: string;
+  tx_last_name: string;
+  tx_full_name: string;
+  tx_specialty: string;
+  tx_medical_registration: string;
+  tx_signature: string;
+}
+
 const { notify } = useNotification();
 
 const loading = ref(true);
@@ -402,6 +445,10 @@ const logoFile = ref<File | null>(null);
 const signatureFile = ref<File | null>(null);
 const logoPreviewUrl = ref<string | null>(null);
 const signaturePreviewUrl = ref<string | null>(null);
+
+// Doctores
+const doctors = ref<Doctor[]>([]);
+const selectedDoctorId = ref<string | null>(null);
 
 const form = ref<CotyConfig>({
   tx_prefijo: 'COT-',
@@ -451,10 +498,40 @@ const handleSignatureUpload = (event: Event) => {
   }
 };
 
+// ====================== DOCTOR SELECTION ======================
+const onDoctorSelected = (doctorId: string | null) => {
+  if (!doctorId) {
+    // Si se limpia la selección, no borrar los campos (el usuario puede estar editando)
+    return;
+  }
+  const doctor = doctors.value.find(d => d.id === doctorId);
+  if (doctor) {
+    form.value.tx_doctor_first_name = doctor.tx_first_name || '';
+    form.value.tx_doctor_last_name = doctor.tx_last_name || '';
+    form.value.tx_doctor_specialty = doctor.tx_specialty || '';
+    form.value.tx_doctor_registration = doctor.tx_medical_registration || '';
+    // Cargar firma del doctor si existe
+    if (doctor.tx_signature) {
+      form.value.tx_firma_url = doctor.tx_signature;
+      signaturePreviewUrl.value = null; // limpiar preview de archivo local
+      signatureFile.value = null;
+    }
+  }
+};
+
 // ====================== DATA LOADING ======================
 onMounted(async () => {
   loading.value = true;
   try {
+    // Cargar lista de doctores
+    const resDoctors = await axios.get(API.QUOTES.DOCTORS).catch(() => null);
+    if (resDoctors?.data?.status && resDoctors.data.data) {
+      doctors.value = resDoctors.data.data.map((d: any) => ({
+        ...d,
+        tx_full_name: `${d.tx_first_name} ${d.tx_last_name}`,
+      }));
+    }
+
     // Cargar configuración de cotizaciones (ahora incluye datos de negocio y doctor)
     const resConfig = await axios.get(API.QUOTES.CONFIG).catch(() => null);
     if (resConfig?.data?.status && resConfig.data.data) {
