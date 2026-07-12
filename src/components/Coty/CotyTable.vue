@@ -78,6 +78,13 @@
                     <v-list-item @click="handleEdit(record)" prepend-icon="mdi-pencil">
                       <v-list-item-title>Editar</v-list-item-title>
                     </v-list-item>
+                    <v-list-item @click="handlePrint(record)" prepend-icon="mdi-eye">
+                      <v-list-item-title>Vista Previa</v-list-item-title>
+                    </v-list-item>
+                    <v-list-item @click="handleDownload(record)" prepend-icon="mdi-download">
+                      <v-list-item-title>Descargar PDF</v-list-item-title>
+                    </v-list-item>
+                    <v-divider />
                     <v-list-item @click="handleChangeStatus(record, 1)" prepend-icon="mdi-check-circle" v-if="record.in_status === 0">
                       <v-list-item-title>Aprobar</v-list-item-title>
                     </v-list-item>
@@ -86,9 +93,6 @@
                     </v-list-item>
                     <v-list-item @click="handleChangeStatus(record, 3)" prepend-icon="mdi-calendar-remove" v-if="record.in_status === 0 || record.in_status === 1">
                       <v-list-item-title>Marcar Vencida</v-list-item-title>
-                    </v-list-item>
-                    <v-list-item @click="handlePrint(record)" prepend-icon="mdi-printer">
-                      <v-list-item-title>Vista Previa</v-list-item-title>
                     </v-list-item>
                   </v-list>
                 </v-menu>
@@ -265,6 +269,37 @@ function handleEdit(quote: Record) {
 
 function handlePrint(quote: Record) {
   router.push(`/quotes-print/${quote.id}`);
+}
+
+async function handleDownload(quote: Record) {
+  try {
+    notify('info', 'Generando PDF...');
+    const res = await axios.get(API.QUOTES.PDF(quote.id));
+    if (res.data.status && res.data.data) {
+      // Convertir base64 a Blob y descargar
+      const byteCharacters = atob(res.data.data);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = res.data.filename || `Cotizacion-${quote.tx_cotizacion_nro || quote.tx_nro}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      notify('success', 'PDF descargado correctamente');
+    } else {
+      notify('error', res.data.msg || 'Error al generar el PDF');
+    }
+  } catch (error) {
+    console.error('Error descargando PDF:', error);
+    notify('error', 'Error al descargar el PDF');
+  }
 }
 
 async function handleChangeStatus(quote: Record, newStatus: number) {

@@ -67,14 +67,17 @@ export const API = {
 
   // ============ COTIZACIONES ============
   QUOTES: {
-    ALL: `${BASE}api/coty/all`,
-    ADD: `${BASE}quotes/add`,
-    EDIT: (id: number | string) => `${BASE}quotes/edt/${id}`,
-    PRINT: (id: number | string) => `${BASE}quotes/print/${id}`,
-    UPDATE: (id: number | string) => `${BASE}quotes/upd/${id}`,
-    STATUS: (id: number | string) => `${BASE}quotes/status/${id}`,
-    DOCTORS: `${BASE}quotes/doctors`,
-    CONFIG: `${BASE}quotes/config`,
+      ALL: `${BASE}api/coty/all`,
+      ADD: `${BASE}quotes/add`,
+      EDIT: (id: number | string) => `${BASE}quotes/edt/${id}`,
+      PRINT: (id: number | string) => `${BASE}quotes/print/${id}`,
+      PDF: (id: number | string) => `${BASE}quotes/pdf/${id}`,
+      DOWNLOAD: (id: number | string) => `${BASE}quotes/download/${id}`,
+      UPDATE: (id: number | string) => `${BASE}quotes/upd/${id}`,
+      STATUS: (id: number | string) => `${BASE}quotes/status/${id}`,
+      DOCTORS: `${BASE}quotes/doctors`,
+      CONFIG: `${BASE}quotes/config`,
+      CONFIG_SAVE: `${BASE}quotes/config/save`,
   },
 
   // ============ HISTORIAS CLÍNICAS ============

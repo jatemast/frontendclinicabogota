@@ -108,7 +108,7 @@ const MainRoutes = {
           component: () => import('@/views/Coty/CotyPrint.vue'),
           meta: {
             requiresAuth: true,
-            module: 'Impresion de Cotizacion'
+            module: 'Listado de Cotizaciones'
           }
         },
         {

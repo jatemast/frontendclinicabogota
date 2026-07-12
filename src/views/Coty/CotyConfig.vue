@@ -455,15 +455,16 @@ const handleSignatureUpload = (event: Event) => {
 onMounted(async () => {
   loading.value = true;
   try {
-    // Cargar configuración de cotizaciones
+    // Cargar configuración de cotizaciones (ahora incluye datos de negocio y doctor)
     const resConfig = await axios.get(API.QUOTES.CONFIG).catch(() => null);
     if (resConfig?.data?.status && resConfig.data.data) {
       const config = resConfig.data.data;
       form.value = {
         ...form.value,
         ...config,
-        in_mostrar_codigos: !!config.in_mostrar_codigos,
-        in_mostrar_logo: !!config.in_mostrar_logo,
+        // Conversión segura de campos booleanos/numéricos desde la BD
+        in_mostrar_codigos: config.in_mostrar_codigos === null ? true : !!config.in_mostrar_codigos,
+        in_mostrar_logo: config.in_mostrar_logo === null ? true : !!config.in_mostrar_logo,
         nu_proximo_nro: parseInt(config.nu_proximo_nro) || 1,
         in_validez_default_dias: parseInt(config.in_validez_default_dias) || 15,
         fl_anticipo_default: parseFloat(config.fl_anticipo_default) || 50,
@@ -471,23 +472,55 @@ onMounted(async () => {
       };
     }
 
-    // Cargar datos del negocio para precargar empresa
+    // Cargar datos del negocio como respaldo (si el endpoint config no los incluyó)
     const resBusiness = await axios.get(API.BUSINESS.DETAILS).catch(() => null);
     if (resBusiness?.data?.status && resBusiness.data.data) {
       const b = resBusiness.data.data;
-      // Solo precargar si no hay datos existentes de config
-      if (!form.value.tx_business_name) {
-        form.value.tx_business_name = b.tx_name || '';
-        form.value.tx_business_nit = b.tx_nit || '';
-        form.value.tx_business_phone = b.tx_phone || '';
-        form.value.tx_business_whatsapp = b.tx_whatsapp || '';
-        form.value.tx_business_email = b.tx_email || '';
-        form.value.tx_business_address = b.tx_address || '';
-        form.value.tx_business_city = b.tx_city || '';
+      if (!form.value.tx_business_name && b.tx_name) {
+        form.value.tx_business_name = b.tx_name;
+      }
+      if (!form.value.tx_business_nit && b.tx_nit) {
+        form.value.tx_business_nit = b.tx_nit;
+      }
+      if (!form.value.tx_business_phone && b.tx_phone) {
+        form.value.tx_business_phone = b.tx_phone;
+      }
+      if (!form.value.tx_business_whatsapp && b.tx_whatsapp) {
+        form.value.tx_business_whatsapp = b.tx_whatsapp;
+      }
+      if (!form.value.tx_business_email && b.tx_email) {
+        form.value.tx_business_email = b.tx_email;
+      }
+      if (!form.value.tx_business_address && b.tx_address) {
+        form.value.tx_business_address = b.tx_address;
+      }
+      if (!form.value.tx_business_city && b.tx_city) {
+        form.value.tx_business_city = b.tx_city;
       }
       if (b.tx_logo && !form.value.tx_logo_url) {
         const idBusiness = localStorage.getItem('id_business');
         form.value.tx_logo_url = `${import.meta.env.VITE_API_URL}uploads/logos/${idBusiness}/${b.tx_logo}`;
+      }
+    }
+
+    // Cargar perfil del doctor (usuario autenticado) como respaldo
+    const resMe = await axios.get(API.USERS.ME).catch(() => null);
+    if (resMe?.data?.status && resMe.data.data) {
+      const u = resMe.data.data;
+      if (!form.value.tx_doctor_first_name && u.tx_first_name) {
+        form.value.tx_doctor_first_name = u.tx_first_name;
+      }
+      if (!form.value.tx_doctor_last_name && u.tx_last_name) {
+        form.value.tx_doctor_last_name = u.tx_last_name;
+      }
+      if (!form.value.tx_doctor_specialty && u.tx_specialty) {
+        form.value.tx_doctor_specialty = u.tx_specialty;
+      }
+      if (!form.value.tx_doctor_registration && u.tx_medical_registration) {
+        form.value.tx_doctor_registration = u.tx_medical_registration;
+      }
+      if (u.tx_signature && !form.value.tx_firma_url) {
+        form.value.tx_firma_url = u.tx_signature;
       }
     }
   } catch (error) {
@@ -538,9 +571,7 @@ const saveConfig = async () => {
       formData.append('tx_firma', signatureFile.value);
     }
 
-    const response = await axios.post(API.QUOTES.CONFIG, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
+    const response = await axios.post(API.QUOTES.CONFIG_SAVE, formData);
 
     if (response.data.status) {
       notify('success', response.data.msg || 'Configuración guardada con éxito!');
