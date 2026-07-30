@@ -49,6 +49,13 @@ const sidebarItem: menu[] = [
     to: '/saas/masters',
     masterOnly: true
   },
+  {
+    title: 'Tipos de Empresa',
+    icon: ToolsIcon,
+    BgColor: 'primary',
+    to: '/saas/customer_types',
+    masterOnly: true
+  },
 
   { header: 'Cotizaciones' },
   

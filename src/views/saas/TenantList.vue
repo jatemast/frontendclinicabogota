@@ -49,9 +49,23 @@ const toggleGroup = (groupItems: Module[]) => {
     }
 };
 
+// Tipos de cliente / empresa
+const customerTypes = ref<any[]>([]);
+const fetchCustomerTypes = async () => {
+    try {
+        const res = await axios.get(`${API_BASE}api/saas/customer-types`);
+        if (res.data.status) {
+            customerTypes.value = res.data.data || [];
+        }
+    } catch (err) {
+        console.error('Error al cargar tipos de cliente:', err);
+    }
+};
+
 const form = ref({
     id: null,
     tx_name: '',
+    id_customer_type: 1,
     tx_owner: '',
     tx_owner_email: '',
     tx_owner_phone: '',
@@ -104,9 +118,9 @@ const fetchModules = async () => {
 };
 
 const openAddModal = async () => {
-    form.value = { id: null, tx_name: '', tx_owner: '', tx_owner_email: '', tx_owner_phone: '', tx_address: '', date_validity: '', admin_password: '', tx_logo: null };
+    form.value = { id: null, tx_name: '', id_customer_type: 1, tx_owner: '', tx_owner_email: '', tx_owner_phone: '', tx_address: '', date_validity: '', admin_password: '', tx_logo: null };
     selectedModules.value = [];
-    await fetchModules();
+    await Promise.all([fetchModules(), fetchCustomerTypes()]);
     dialog.value = true;
 };
 
@@ -127,6 +141,7 @@ const openEditModal = async (tenantInput: any) => {
     form.value = {
         id: tenant.id,
         tx_name: tenant.tx_name,
+        id_customer_type: Number(tenant.id_customer_type) || 1,
         tx_owner: tenant.tx_owner,
         tx_owner_email: tenant.tx_owner_email,
         tx_owner_phone: tenant.tx_owner_phone,
@@ -138,6 +153,7 @@ const openEditModal = async (tenantInput: any) => {
     selectedModules.value = [];
     dialog.value = true;
     fetchModules();
+    fetchCustomerTypes();
     try {
         const res = await axios.get(`${API_BASE}api/saas/businesses/${tenant.id}/permissions`);
         if (res.data.status) {
@@ -414,6 +430,7 @@ onMounted(() => {
       <v-data-table
         :headers="[
           { title: 'Empresa', align: 'start', key: 'tx_name' },
+          { title: 'Tipo de Empresa', align: 'start', key: 'customer_type_name' },
           { title: 'Propietario', align: 'start', key: 'tx_owner' },
           { title: 'Teléfono / Dirección', align: 'start', key: 'tx_owner_phone' },
           { title: 'Válido Hasta', align: 'start', key: 'date_validity' },
@@ -439,6 +456,13 @@ onMounted(() => {
               <div class="text-caption text-secondary">{{ getRow(item).tx_owner_email || getRow(item).admin_email || getRow(item).email || 'Sin email registrado' }}</div>
             </div>
           </div>
+        </template>
+
+        <!-- Columna Tipo de Empresa -->
+        <template v-slot:item.customer_type_name="{ item }">
+          <v-chip color="primary" size="small" variant="tonal" class="font-weight-bold">
+            {{ getRow(item).customer_type_name || 'Clínica' }}
+          </v-chip>
         </template>
 
         <!-- Columna Propietario -->
@@ -516,6 +540,18 @@ onMounted(() => {
           <v-row>
             <v-col cols="12" md="6">
               <v-text-field v-model="form.tx_name" label="Nombre de la Empresa *" variant="outlined" rounded="lg" density="comfortable"></v-text-field>
+            </v-col>
+            <v-col cols="12" md="6">
+              <v-select
+                v-model="form.id_customer_type"
+                :items="customerTypes.length > 0 ? customerTypes : [{ id: 1, tx_name: 'Clínica' }, { id: 2, tx_name: 'Estética' }]"
+                item-title="tx_name"
+                item-value="id"
+                label="Tipo de Empresa *"
+                variant="outlined"
+                rounded="lg"
+                density="comfortable"
+              ></v-select>
             </v-col>
             <v-col cols="12" md="6">
               <v-text-field v-model="form.tx_owner" label="Propietario / Director *" variant="outlined" rounded="lg" density="comfortable"></v-text-field>

@@ -90,13 +90,17 @@ const filteredMenu = computed(() => {
     const result = [];
     const items = sidebarItems;
     const isMaster = localStorage.getItem('is_master') === 'true';
+    const historyPlural = localStorage.getItem('customer_type_plural') || 'Historias Clínicas';
 
     for (let i = 0; i < items.length; i++) {
-        const item = items[i];
+        let item = { ...items[i] };
         
         if (item.masterOnly && !isMaster) continue;
 
         if (item.header) {
+            if (item.header === 'Historias Clínicas') {
+                item.header = historyPlural;
+            }
             let hasVisibleChildren = false;
             for (let j = i + 1; j < items.length; j++) {
                 const nextItem = items[j];
@@ -111,6 +115,9 @@ const filteredMenu = computed(() => {
             }
             if (hasVisibleChildren) result.push(item);
         } else {
+            if (item.title === 'Historias Clínicas') {
+                item.title = historyPlural;
+            }
             const isVisible = !item.module || can(item.module);
             if (isVisible) result.push(item);
         }

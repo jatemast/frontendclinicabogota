@@ -55,6 +55,9 @@ async function downloadByDni() {
   }
 }
 
+const historySingular = ref(localStorage.getItem('customer_type_singular') || 'Historia Clínica');
+const historyPlural = ref(localStorage.getItem('customer_type_plural') || 'Historias Clínicas');
+
 function openSearchDialog() {
   searchDni.value = '';
   showSearchDialog.value = true;
@@ -72,10 +75,10 @@ function openSearchDialog() {
           variant="tonal"
           @click="openSearchDialog"
         >
-          Descargar Historias por Cédula
+          Descargar {{ historyPlural }} por Cédula
         </v-btn>
         <v-btn color="primary" prepend-icon="mdi-plus" :to="{ name: 'MedicalHistoryAdd' }">
-          Iniciar Historia Clínica
+          Iniciar {{ historySingular }}
         </v-btn>
       </div>
 
