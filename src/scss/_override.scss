@@ -248,6 +248,43 @@ body {
     height: calc(100vh - 315px);
 }
 
+/* --- REGLAS DE IMPRESIÓN GLOBALES (ISOLATION FOR PRINT - NO BLANK PAGES) --- */
+@media print {
+    *, *::before, *::after {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+    }
+
+    .v-navigation-drawer,
+    .v-app-bar,
+    .v-footer,
+    .no-print,
+    header,
+    aside,
+    nav,
+    .v-overlay-container,
+    div[class*="impersonat"],
+    div[class*="banner"] {
+        display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        opacity: 0 !important;
+    }
+
+    body, html, #app, .v-application, .v-layout, .v-main {
+        background: #ffffff !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        height: auto !important;
+        min-height: 0 !important;
+    }
+}
+
+
 .h-100vh {
     height: 100vh;
 }
