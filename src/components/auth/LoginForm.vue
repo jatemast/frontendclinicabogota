@@ -99,14 +99,14 @@ const handleLogin = async () => {
 
 <template>
     <div class="text-center mb-6">
-        <h2 class="text-h4 font-weight-bold mb-1 text-primary">Bienvenido</h2>
-        <p class="text-body-2 text-secondary">Gestione su clínica con elegancia y facilidad</p>
+        <h2 class="text-h4 font-weight-bold mb-1 text-primary">Iniciar Sesión</h2>
     </div>
 
     <v-form @submit.prevent="handleLogin">
-        <v-label class="text-caption font-weight-bold text-uppercase text-secondary mb-1">Usuario</v-label>
+        <v-label class="text-caption font-weight-bold text-uppercase text-secondary mb-1">Usuario / Email</v-label>
         <v-text-field
             v-model="tx_username"
+            placeholder="Ej. admin@clinica.com"
             variant="outlined"
             color="primary"
             density="comfortable"
@@ -119,11 +119,12 @@ const handleLogin = async () => {
         <v-text-field
             v-model="tx_password"
             :type="showPassword ? 'text' : 'password'"
+            placeholder="••••••••••••"
             variant="outlined"
             color="primary"
             density="comfortable"
             prepend-inner-icon="mdi-lock-outline"
-            :append-inner-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
+            :append-inner-icon="showPassword ? 'mdi-eye-off-outline' : 'mdi-eye-outline'"
             @click:append-inner="showPassword = !showPassword"
             class="mb-2"
             rounded="lg"
@@ -149,12 +150,12 @@ const handleLogin = async () => {
         </div>
 
         <div class="d-flex align-center justify-space-between mb-6">
-            <v-checkbox label="Recuérdame" color="primary" hide-details density="compact"></v-checkbox>
+            <v-checkbox label="Recuérdame" color="primary" hide-details density="compact" class="font-weight-medium"></v-checkbox>
             <a href="#" class="text-primary text-body-2 font-weight-bold text-decoration-none">¿Olvidó sus credenciales?</a>
         </div>
 
-        <v-btn block size="large" type="submit" :loading="loading" class="login-btn mb-4">
-            INGRESAR
+        <v-btn block size="large" type="submit" :loading="loading" class="login-btn mb-4 font-weight-bold">
+            <v-icon start>mdi-login</v-icon> INGRESAR AL SISTEMA
         </v-btn>
     </v-form>
 </template>
