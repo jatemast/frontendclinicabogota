@@ -1,33 +1,43 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, useTemplateRef } from 'vue';
 import { useDisplay } from 'vuetify';
+import { useRouter } from 'vue-router';
 import sidebarItems from './vertical-sidebar/sidebarItem';
 import NavGroup from './vertical-sidebar/NavGroup/index.vue';
 import NavItem from './vertical-sidebar/NavItem/index.vue';
 import Logo from './logo/Logo.vue';
-import { Menu2Icon, ChevronUpIcon, ChevronDownIcon } from 'vue-tabler-icons';
+import { Menu2Icon, ChevronUpIcon, ChevronDownIcon, LogoutIcon, UserIcon } from 'vue-tabler-icons';
 import NotificationDD from './vertical-header/NotificationDD.vue';
 import ProfileDD from './vertical-header/ProfileDD.vue';
 import { userPermissions, refreshPermissions, can } from '@/utils/permissions';
+import { useNotification } from '@/utils/useNotification';
+import axios from 'axios';
 
 const { lgAndUp } = useDisplay();
+const router = useRouter();
+const { notify } = useNotification();
 const sDrawer = ref(true);
-const railMode = ref(true); // Nuevo estado para controlar el modo colapsado/expandido
+const railMode = ref(false); // Inicia expandido por defecto como LogicSurgi
 const isLoading = ref(true);
-const isImpersonating = ref(false); // Indica si el usuario actual está en modo de suplantación (impersonating) de un cliente.
+const isImpersonating = ref(false);
+
+const userName = computed(() => localStorage.getItem('user_display') || 'Usuario');
+const userPhoto = computed(() => {
+    const photo = localStorage.getItem('user_photo');
+    return photo ? `${import.meta.env.VITE_API_URL}${photo}` : '';
+});
 
 const appBarTopOffset = computed(() => {
-    return isImpersonating.value ? 48 : 0; // 48px es la altura estimada de la alerta
+    return isImpersonating.value ? 48 : 0;
 });
 const appBarDynamicTop = computed(() => {
     return `calc(20px + ${appBarTopOffset.value}px)`;
 });
 
-const checkImpersonation = () => { // Verifica si existe un 'master_token' en localStorage, lo que indica que se está suplantando a un cliente.
+const checkImpersonation = () => {
     isImpersonating.value = !!localStorage.getItem('master_token');
 };
 
-// Lógica para detectar el scroll
 const scrollContainer = useTemplateRef<HTMLElement>('scrollContainer');
 const canScrollUp = ref(false);
 const canScrollDown = ref(false);
@@ -44,10 +54,10 @@ onMounted(async () => {
     checkImpersonation();
     await refreshPermissions(); 
     isLoading.value = false;
-    setTimeout(checkScroll, 500); // Verificación inicial
+    setTimeout(checkScroll, 500);
 });
 
-const returnToMaster = () => { // Revierte el modo de suplantación, restaurando el token y el ID de negocio del usuario maestro, y recarga la página.
+const returnToMaster = () => {
     const masterToken = localStorage.getItem('master_token');
     if (masterToken && masterToken !== 'null' && masterToken !== 'undefined') {
         localStorage.setItem('access_token', masterToken);
@@ -58,11 +68,25 @@ const returnToMaster = () => { // Revierte el modo de suplantación, restaurando
     }
     localStorage.removeItem('master_token');
     localStorage.setItem('is_master', 'true');
-    localStorage.setItem('id_business', '9999'); // ID especial que indica el modo MASTER.
+    localStorage.setItem('id_business', '9999');
     window.location.href = '/';
 };
 
-const filteredMenu = computed(() => { // Filtra los elementos del menú lateral basándose en los permisos del usuario actual y si es el usuario maestro o un cliente suplantado.
+const handleLogout = async () => {
+    const token = localStorage.getItem('token');
+    try {
+        await axios.post(`${import.meta.env.VITE_API_URL}logout`, {}, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+    } catch (err) {
+        console.warn('No se pudo cerrar sesión en el backend:', err);
+    }
+    localStorage.clear();
+    notify('info', 'Sesión cerrada exitosamente');
+    router.push('/');
+};
+
+const filteredMenu = computed(() => {
     const result = [];
     const items = sidebarItems;
     const isMaster = localStorage.getItem('is_master') === 'true';
@@ -79,7 +103,6 @@ const filteredMenu = computed(() => { // Filtra los elementos del menú lateral 
                 if (nextItem.header) break;
                 if (nextItem.masterOnly && !isMaster) continue;
                 
-                // Usar can() en lugar de includes() para respetar master y personificación
                 const isItemVisible = !nextItem.module || can(nextItem.module);
                 if (isItemVisible) {
                     hasVisibleChildren = true;
@@ -88,7 +111,6 @@ const filteredMenu = computed(() => { // Filtra los elementos del menú lateral 
             }
             if (hasVisibleChildren) result.push(item);
         } else {
-            // Usar can() en lugar de includes() para respetar master y personificación
             const isVisible = !item.module || can(item.module);
             if (isVisible) result.push(item);
         }
@@ -103,29 +125,38 @@ const filteredMenu = computed(() => { // Filtra los elementos del menú lateral 
         app 
         :permanent="lgAndUp"
         :temporary="!lgAndUp"
-        :width="lgAndUp ? (railMode ? 95 : 280) : 280" 
+        :width="lgAndUp ? (railMode ? 90 : 260) : 260" 
         :class="[lgAndUp ? 'premium-sidebar-rail' : 'mobile-sidebar', { 'expanded-sidebar': lgAndUp && !railMode }]"
         elevation="0"
         :rail="lgAndUp && railMode"
     >
-        <div class="d-flex flex-column h-100 py-6">
-            <div :class="[
-                'logo-wrapper', 
-                lgAndUp ? 'logo-pc mb-6' : 'logo-mobile w-100 px-6 mb-6'
-                 ]">
-                <Logo :is-mini="lgAndUp && railMode" /> <!-- Modificado para pasar is-mini basado en railMode -->
+        <div class="d-flex flex-column h-100 py-5 px-3">
+            <!-- Logo Section -->
+            <div class="logo-wrapper mb-4 text-center">
+                <Logo :is-mini="lgAndUp && railMode" />
             </div>
 
-            <v-divider class="w-50 mb-4 opacity-10 align-self-center" v-if="lgAndUp && railMode"></v-divider> <!-- Divider condicional -->
+            <!-- Doctor / User Header Card (Style LogicSurgi) -->
+            <div v-if="!railMode || !lgAndUp" class="user-sidebar-card mb-4 pa-3 d-flex align-center gap-3">
+                <v-avatar size="42" color="primary" class="border">
+                    <img v-if="userPhoto" :src="userPhoto" alt="User Photo" style="object-fit: cover; width: 100%; height: 100%;" />
+                    <UserIcon v-else size="22" color="white" />
+                </v-avatar>
+                <div class="user-info text-truncate">
+                    <h5 class="text-subtitle-2 font-weight-bold text-truncate text-primary mb-0">{{ userName }}</h5>
+                    <span class="text-caption text-secondary font-weight-medium">Especialista / Admin</span>
+                </div>
+            </div>
 
+            <v-divider class="mb-3 opacity-20"></v-divider>
+
+            <!-- Scrollable Navigation Items -->
             <div class="scroll-wrapper flex-grow-1">
                 <Transition name="fade">
                     <div v-if="lgAndUp && canScrollUp" class="scroll-indicator up">
-
-                        <v-btn size="36" color="primary" variant="flat" class="text-primary icon-bounce mt-6" >
-                            <v-icon  >mdi-arrow-up</v-icon>
+                        <v-btn size="32" color="primary" variant="flat" class="text-primary icon-bounce">
+                            <v-icon size="18">mdi-arrow-up</v-icon>
                         </v-btn>
-                        
                     </div>
                 </Transition>
 
@@ -138,7 +169,7 @@ const filteredMenu = computed(() => { // Filtra los elementos del menú lateral 
                         <template v-for="(item, i) in filteredMenu">
                             <div v-if="item.header" :key="item.title" class="w-100">
                                 <NavGroup v-if="lgAndUp" :item="item" :rail-mode="railMode" />
-                                <v-list-subheader v-else class="text-uppercase text-caption font-weight-bold ml-4 text-primary">
+                                <v-list-subheader v-else class="text-uppercase text-caption font-weight-bold ml-2 text-primary">
                                     {{ item.header }}
                                 </v-list-subheader>
                             </div>
@@ -150,11 +181,37 @@ const filteredMenu = computed(() => { // Filtra los elementos del menú lateral 
 
                 <Transition name="fade">
                     <div v-if="lgAndUp && canScrollDown" class="scroll-indicator down">
-                        <v-btn size="36" color="primary" variant="flat" class="text-primary icon-bounce mb-6" >
-                            <v-icon  >mdi-arrow-down</v-icon>
+                        <v-btn size="32" color="primary" variant="flat" class="text-primary icon-bounce">
+                            <v-icon size="18">mdi-arrow-down</v-icon>
                         </v-btn>
                     </div>
                 </Transition>
+            </div>
+
+            <!-- Footer / Logout Section -->
+            <div class="sidebar-footer pt-3 mt-auto border-top">
+                <v-btn 
+                    v-if="!railMode || !lgAndUp"
+                    block 
+                    variant="tonal" 
+                    color="error" 
+                    class="rounded-lg font-weight-semibold text-caption"
+                    @click="handleLogout"
+                >
+                    <LogoutIcon size="16" class="mr-2" />
+                    Cerrar sesión
+                </v-btn>
+                <v-btn
+                    v-else
+                    icon
+                    variant="tonal"
+                    color="error"
+                    size="40"
+                    class="mx-auto d-block rounded-lg"
+                    @click="handleLogout"
+                >
+                    <LogoutIcon size="18" />
+                </v-btn>
             </div>
         </div>
     </v-navigation-drawer>
@@ -183,11 +240,11 @@ const filteredMenu = computed(() => { // Filtra los elementos del menú lateral 
         </v-alert>
 
         <div class="maxWidth">
-            <v-app-bar elevation="0" height="75" color="transparent" flat class="modern-app-bar"
+            <v-app-bar elevation="0" height="70" color="transparent" flat class="modern-app-bar"
                 :style="{ top: appBarDynamicTop + ' !important' }"
             >
                 <div class="d-flex align-center justify-space-between w-100 px-6">
-                    <div class="d-flex align-center floating-group px-4 py-2">
+                    <div class="d-flex align-center floating-group px-3 py-1">
                         <v-btn 
                             class="hidden-lg-and-up text-muted mr-2" 
                             @click="sDrawer = !sDrawer" 
@@ -200,7 +257,7 @@ const filteredMenu = computed(() => { // Filtra los elementos del menú lateral 
 
                         <v-btn
                             v-if="lgAndUp"
-                            class="text-muted ml-2"
+                            class="text-muted ml-1"
                             @click="railMode = !railMode"
                             icon
                             variant="text"
@@ -212,7 +269,7 @@ const filteredMenu = computed(() => { // Filtra los elementos del menú lateral 
 
                     <div class="d-flex align-center gap-2 floating-group px-3 py-1">
                         <NotificationDD />
-                        <v-divider vertical inset class="mx-2 my-3"></v-divider>
+                        <v-divider vertical inset class="mx-2 my-2"></v-divider>
                         <ProfileDD />
                     </div>
                 </div>
@@ -224,10 +281,12 @@ const filteredMenu = computed(() => { // Filtra los elementos del menú lateral 
 <style scoped>
 .premium-sidebar-rail {
     backdrop-filter: blur(15px) saturate(180%);
-    border-right: 1px solid rgba(var(--v-theme-primary), 0.1) !important;
+    border-right: 1px solid rgb(var(--v-theme-borderColor)) !important;
     margin: 15px 0 15px 15px !important; 
     height: calc(100vh - 30px) !important;
-    border-radius: 24px !important;
+    border-radius: 22px !important;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08) !important;
+    background: rgb(var(--v-theme-surface)) !important;
     overflow: hidden !important;
 }
 
@@ -238,7 +297,6 @@ const filteredMenu = computed(() => { // Filtra los elementos del menú lateral 
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Estilo para PC (Riel estrecho) */
 .logo-pc {
     width: 100%;
     padding: 0 10px;
@@ -246,55 +304,51 @@ const filteredMenu = computed(() => { // Filtra los elementos del menú lateral 
 
 .logo-pc :deep(img), 
 .logo-pc :deep(svg) {
-    width: 48px !important; /* Tamaño optimizado para el riel de 95px */
+    width: 48px !important;
     height: auto;
     object-fit: contain;
 }
 
-/* Estilo para Móvil (Drawer ancho) */
 .logo-mobile {
-    justify-content: center; /* Alineado a la izquierda para un look de app móvil */
+    justify-content: center;
     margin-top: 10px;
 }
 
 .logo-mobile :deep(img), 
 .logo-mobile :deep(svg) {
-    width: 120px !important; /* Tamaño más legible en móviles */
+    width: 120px !important;
     height: auto;
 }
 
-/* Efecto Hover Premium solo en PC */
 @media (min-width: 1264px) {
     .logo-pc:hover {
-        transform: scale(1.05) rotate(-2deg);
+        transform: scale(1.05);
     }
 }
 
 .mobile-sidebar {
-    background: white !important;
+    background: rgb(var(--v-theme-surface)) !important;
     margin: 0 !important;
     height: 100vh !important;
 }
 
-/* Clases para el sidebar expandido en desktop */
 .expanded-sidebar {
-    width: 280px !important; /* Ancho completo */
+    width: 280px !important;
     .logo-pc :deep(img),
     .logo-pc :deep(svg) {
-        width: 120px !important; /* Logotipo más grande */
+        width: 120px !important;
     }
     .menu-items-container {
-        align-items: flex-start; /* Alinea los items a la izquierda */
-        padding-left: 15px; /* Pequeño padding para el texto */
+        align-items: flex-start;
+        padding-left: 12px;
+        padding-right: 12px;
     }
-    /* Asegúrate de que los subencabezados de los grupos sean visibles */
     :deep(.v-list-subheader) {
         opacity: 1 !important;
         visibility: visible !important;
-        height: auto !important; /* Permite que el contenido tome la altura necesaria */
+        height: auto !important;
     }
 }
-
 
 /* --- SCROLL LOGIC --- */
 .scroll-wrapper {
@@ -305,28 +359,25 @@ const filteredMenu = computed(() => { // Filtra los elementos del menú lateral 
 .scroll-area {
     overflow-y: auto;
     overflow-x: hidden;
-    scrollbar-width: thin; /* Firefox */
-    scrollbar-color: rgba(46, 236, 213, 0.2) transparent;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(24, 182, 201, 0.25) transparent;
     padding: 0 10px;
     
-    /* Efecto de máscara para intuición de scroll */
     mask-image: linear-gradient(to bottom, transparent, black 8%, black 92%, transparent);
     -webkit-mask-image: linear-gradient(to bottom, transparent, black 8%, black 92%, transparent);
 }
 
-/* Estilo de barra para Chrome/Edge/Safari */
 .scroll-area::-webkit-scrollbar {
     width: 4px;
 }
 .scroll-area::-webkit-scrollbar-thumb {
-    background: rgba(46, 236, 213, 0.15);
+    background: rgba(24, 182, 201, 0.2);
     border-radius: 10px;
 }
 .scroll-area:hover::-webkit-scrollbar-thumb {
-    background: rgba(46, 236, 213, 0.45);
+    background: rgba(24, 182, 201, 0.5);
 }
 
-/* Indicadores visuales */
 .scroll-indicator {
     position: absolute;
     left: 0;
@@ -345,7 +396,6 @@ const filteredMenu = computed(() => { // Filtra los elementos del menú lateral 
     bottom: 0; 
 }
 
-/* Animaciones de íconos */
 .icon-bounce { animation: bounceUp 2s infinite; }
 .icon-bounce-reverse { animation: bounceDown 2s infinite; }
 
@@ -366,22 +416,31 @@ const filteredMenu = computed(() => { // Filtra los elementos del menú lateral 
 .menu-items-container {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 8px;
     align-items: center;
-    padding: 30px 0;
+    padding: 20px 0;
 }
 
 .section-dot {
     width: 6px;
     height: 6px;
-    background: #2eced5;
+    background: #18B6C9;
     border-radius: 50%;
     margin: 20px auto 10px;
     opacity: 0.3;
 }
 
 .floating-group {
-    backdrop-filter: blur(10px);
+    background: rgb(var(--v-theme-surface));
+    backdrop-filter: blur(12px);
+    border: 1px solid rgb(var(--v-theme-borderColor));
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    border-radius: 16px;
+}
+
+.user-sidebar-card {
+    background: rgb(var(--v-theme-bglight));
+    border: 1px solid rgb(var(--v-theme-borderColor));
     border-radius: 16px;
 }
 </style>

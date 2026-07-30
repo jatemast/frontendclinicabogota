@@ -1,164 +1,234 @@
 <template>
-  <v-container fluid class="print-preview-container">
+  <v-container fluid class="print-preview-container pa-4 pa-sm-8">
     <v-row justify="center">
       <v-col cols="12" md="10" lg="8">
-        <v-card v-if="loading" flat class="pa-10 text-center">
-          <v-progress-circular indeterminate color="primary" size="64"></v-progress-circular>
-          <p class="mt-4 text-medium-emphasis">Cargando vista previa de la cotización...</p>
+        <!-- BARRA DE ACCIONES DE IMPRESIÓN (NO IMPRIMIBLE) -->
+        <div class="d-flex align-center justify-space-between mb-6 no-print">
+          <v-btn color="secondary" variant="tonal" rounded="lg" class="font-weight-bold" @click="router.back()">
+            <v-icon start>mdi-arrow-left</v-icon> Volver a Cotizaciones
+          </v-btn>
+          <div class="d-flex gap-3">
+            <v-btn color="primary" variant="flat" rounded="lg" class="font-weight-bold px-6" @click="printQuotation">
+              <v-icon start>mdi-printer</v-icon> Imprimir / Exportar PDF
+            </v-btn>
+          </div>
+        </div>
+
+        <!-- INDICADOR DE CARGA -->
+        <v-card v-if="loading" elevation="0" rounded="xl" class="pa-12 text-center border bg-surface">
+          <v-progress-circular indeterminate color="primary" size="64" width="6"></v-progress-circular>
+          <p class="mt-4 text-subtitle-1 font-weight-bold text-primary">Generando documento oficial de cotización...</p>
         </v-card>
 
-        <v-card v-else-if="quote" class="quotation-card pa-8" flat rounded="lg">
-          <!-- HEADER -->
-          <v-row no-gutters class="mb-6 align-center">
-            <v-col cols="6">
-              <div class="d-flex align-center">
-                <img v-if="quote.business_logo" :src="quote.business_logo" alt="Logo Clínica" class="business-logo mr-4" />
+        <!-- DOCUMENTO DE COTIZACIÓN -->
+        <v-card v-else-if="quote" class="quotation-card pa-6 pa-sm-10 border rounded-xl bg-surface" elevation="0">
+          <!-- HEADER CLÍNICA & FOLIO -->
+          <v-row class="mb-6 align-center">
+            <v-col cols="12" sm="7">
+              <div class="d-flex align-center gap-4">
+                <img v-if="quote.business_logo" :src="quote.business_logo" alt="Logo Clínica" class="business-logo" />
+                <v-avatar v-else color="lightprimary" size="64" rounded="lg" class="border">
+                  <v-icon color="primary" size="36">mdi-hospital-building</v-icon>
+                </v-avatar>
                 <div>
-                  <h1 class="text-h6 font-weight-bold text-primary">{{ quote.business_name }}</h1>
-                  <p class="text-caption text-medium-emphasis">NIT: {{ quote.business_nit || 'N/A' }}</p>
-                  <p class="text-caption text-medium-emphasis">{{ quote.business_address || 'N/A' }}, {{ quote.business_city || 'N/A' }}</p>
-                  <p class="text-caption text-medium-emphasis">Tel: {{ quote.business_phone || 'N/A' }} | WhatsApp: {{ quote.business_whatsapp || 'N/A' }}</p>
-                  <p class="text-caption text-medium-emphasis">Email: {{ quote.business_email || 'N/A' }}</p>
+                  <h1 class="text-h5 font-weight-bold text-primary mb-1">{{ quote.business_name || 'LogicSurgi Clínica' }}</h1>
+                  <p class="text-caption text-secondary mb-0"><strong>NIT / RUC:</strong> {{ quote.business_nit || 'N/A' }}</p>
+                  <p class="text-caption text-secondary mb-0"><v-icon size="12" color="primary">mdi-map-marker</v-icon> {{ quote.business_address || 'Dirección no registrada' }}, {{ quote.business_city || '' }}</p>
+                  <p class="text-caption text-secondary mb-0"><v-icon size="12" color="primary">mdi-phone</v-icon> {{ quote.business_phone || 'N/A' }} <span v-if="quote.business_whatsapp">| WhatsApp: {{ quote.business_whatsapp }}</span></p>
+                  <p class="text-caption text-secondary mb-0"><v-icon size="12" color="primary">mdi-email-outline</v-icon> {{ quote.business_email || 'N/A' }}</p>
                 </div>
               </div>
             </v-col>
-            <v-col cols="6" class="text-right">
-              <div class="py-2 px-4 bg-primary-lighten-5 rounded-lg d-inline-block">
-                <h2 class="text-h5 font-weight-bold text-primary">COTIZACIÓN</h2>
-                <p class="text-subtitle-1 font-weight-bold text-secondary">No. {{ quote.tx_cotizacion_nro || quote.tx_nro }}</p>
+            <v-col cols="12" sm="5" class="text-sm-right mt-4 mt-sm-0">
+              <div class="folio-badge pa-4 rounded-xl d-inline-block text-center border bg-lightprimary">
+                <span class="text-overline font-weight-bold text-primary d-block">COTIZACIÓN MÉDICA</span>
+                <h2 class="text-h4 font-weight-bold text-primary">No. {{ quote.tx_cotizacion_nro || quote.tx_nro }}</h2>
               </div>
-              <p class="text-caption mt-2">Fecha de Emisión: {{ formatDate(quote.date_add) }}</p>
-              <p class="text-caption">Válida hasta: {{ formatDate(quote.date_vencimiento) }}</p>
+              <div class="mt-3">
+                <p class="text-caption text-secondary mb-0"><strong>Emisión:</strong> {{ formatDate(quote.date_add) }}</p>
+                <p class="text-caption text-secondary mb-0"><strong>Válido Hasta:</strong> {{ formatDate(quote.date_vencimiento) }}</p>
+              </div>
             </v-col>
           </v-row>
 
           <v-divider class="my-6"></v-divider>
 
-          <!-- DATOS DEL PACIENTE -->
-          <h3 class="text-subtitle-1 font-weight-bold mb-3 text-secondary">DATOS DEL PACIENTE</h3>
-          <v-row dense class="mb-6 patient-data-card">
-            <v-col cols="12" sm="6">
-              <p class="text-body-2"><strong>Nombre:</strong> {{ quote.tx_first_name }} {{ quote.tx_last_name }}</p>
-              <p class="text-body-2"><strong>Documento:</strong> {{ quote.tx_dni_type }}-{{ quote.tx_dni }}</p>
+          <!-- SECCIÓN 1: DATOS DEL PACIENTE -->
+          <div class="section-card pa-4 rounded-lg mb-6 border bg-lightprimary">
+            <div class="d-flex align-center mb-3">
+              <v-icon color="primary" class="mr-2" size="20">mdi-account-heart</v-icon>
+              <h3 class="text-subtitle-1 font-weight-bold text-primary">INFORMACIÓN DEL PACIENTE</h3>
+            </div>
+            <v-row dense class="text-body-2">
+              <v-col cols="12" sm="6" md="4">
+                <p class="mb-1 text-secondary">Paciente:</p>
+                <p class="font-weight-bold text-primary text-subtitle-2 mb-0">{{ quote.tx_first_name }} {{ quote.tx_last_name }}</p>
+              </v-col>
+              <v-col cols="12" sm="6" md="4">
+                <p class="mb-1 text-secondary">Documento ID:</p>
+                <p class="font-weight-bold mb-0">{{ quote.tx_dni_type ? `${quote.tx_dni_type}-` : '' }}{{ quote.tx_dni || 'N/A' }}</p>
+              </v-col>
+              <v-col cols="12" sm="6" md="4">
+                <p class="mb-1 text-secondary">Edad:</p>
+                <p class="font-weight-bold mb-0">{{ getAge(quote.customer_birth) }} años</p>
+              </v-col>
+              <v-col cols="12" sm="6" md="4" class="mt-2">
+                <p class="mb-1 text-secondary">Teléfono:</p>
+                <p class="font-weight-bold mb-0">{{ quote.customer_phone || 'N/A' }}</p>
+              </v-col>
+              <v-col cols="12" sm="6" md="4" class="mt-2">
+                <p class="mb-1 text-secondary">Email:</p>
+                <p class="font-weight-bold mb-0">{{ quote.customer_email || 'N/A' }}</p>
+              </v-col>
+              <v-col cols="12" sm="6" md="4" class="mt-2">
+                <p class="mb-1 text-secondary">Ciudad / Dirección:</p>
+                <p class="font-weight-bold mb-0">{{ quote.customer_city || '' }} {{ quote.customer_address ? `(${quote.customer_address})` : '' }}</p>
+              </v-col>
+            </v-row>
+          </div>
+
+          <!-- SECCIÓN 2: DIAGNÓSTICO / EVALUACIÓN -->
+          <div class="mb-6">
+            <div class="d-flex align-center mb-2">
+              <v-icon color="primary" class="mr-2" size="20">mdi-stethoscope</v-icon>
+              <h3 class="text-subtitle-1 font-weight-bold text-primary">DIAGNÓSTICO Y EVALUACIÓN CLÍNICA</h3>
+            </div>
+            <div class="detail-box pa-4 rounded-lg border bg-surface">
+              <p class="text-body-2 mb-0">{{ quote.tx_diagnostico || 'Evaluación médica presencial.' }}</p>
+            </div>
+          </div>
+
+          <!-- SECCIÓN 3: TABLA DE PROCEDIMIENTOS Y SERVICIOS -->
+          <div class="mb-6">
+            <div class="d-flex align-center mb-3">
+              <v-icon color="primary" class="mr-2" size="20">mdi-clipboard-list-outline</v-icon>
+              <h3 class="text-subtitle-1 font-weight-bold text-primary">PROCEDIMIENTOS Y SERVICIOS INCLUIDOS</h3>
+            </div>
+
+            <v-table class="items-table border rounded-lg overflow-hidden mb-4">
+              <thead>
+                <tr>
+                  <th v-if="quote.in_mostrar_codigos" class="text-overline font-weight-bold" width="90">CÓDIGO</th>
+                  <th class="text-overline font-weight-bold">PROCEDIMIENTO / DETALLE</th>
+                  <th class="text-overline font-weight-bold text-center" width="75">CANT.</th>
+                  <th class="text-overline font-weight-bold text-right" width="130">VALOR UNIT.</th>
+                  <th class="text-overline font-weight-bold text-right" width="140">SUBTOTAL</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(item, index) in quote.items" :key="index" class="item-row">
+                  <td v-if="quote.in_mostrar_codigos" class="font-weight-medium text-caption">{{ item.tx_codigo || '-' }}</td>
+                  <td>
+                    <p class="font-weight-bold text-subtitle-2 mb-0 text-primary">{{ item.tx_servicio }}</p>
+                    <p v-if="item.tx_descripcion" class="text-caption text-secondary mb-0">{{ item.tx_descripcion }}</p>
+                  </td>
+                  <td class="text-center font-weight-bold">{{ item.nu_cantidad }}</td>
+                  <td class="text-right font-weight-medium">$ {{ formatMoney(item.fl_valor_unitario) }}</td>
+                  <td class="text-right font-weight-bold text-primary">$ {{ formatMoney(item.fl_subtotal) }}</td>
+                </tr>
+              </tbody>
+            </v-table>
+          </div>
+
+          <!-- SECCIÓN 4: CONDICIONES DE PAGO & RESUMEN FINANCIERO -->
+          <v-row class="mb-6">
+            <!-- Condiciones Left -->
+            <v-col cols="12" md="6">
+              <div class="detail-box pa-4 rounded-lg border bg-surface h-100">
+                <div class="d-flex align-center mb-3">
+                  <v-icon color="primary" class="mr-2" size="20">mdi-credit-card-outline</v-icon>
+                  <h4 class="text-subtitle-2 font-weight-bold text-primary">CONDICIONES DE PAGO Y VIGENCIA</h4>
+                </div>
+                <p class="text-body-2 mb-2"><strong>Forma de Pago:</strong> {{ quote.tx_forma_pago || 'A convenir' }}</p>
+                <p class="text-body-2 mb-2"><strong>Días de Validez:</strong> {{ quote.in_validez_dias || 30 }} días calendario a partir de su emisión.</p>
+                <p class="text-body-2 mb-0"><strong>Vencimiento Oficial:</strong> {{ formatDate(quote.date_vencimiento) }}</p>
+              </div>
             </v-col>
-            <v-col cols="12" sm="6">
-              <p class="text-body-2"><strong>Edad:</strong> {{ getAge(quote.customer_birth) }} años</p>
-              <p class="text-body-2"><strong>Teléfono:</strong> {{ quote.customer_phone }}</p>
-              <p class="text-body-2"><strong>Email:</strong> {{ quote.customer_email }}</p>
+
+            <!-- Total Box Right -->
+            <v-col cols="12" md="6">
+              <div class="financial-summary-box pa-4 rounded-lg border bg-lightprimary">
+                <div class="d-flex justify-space-between text-body-2 mb-2">
+                  <span class="text-secondary">Subtotal Procedimientos:</span>
+                  <span class="font-weight-bold">$ {{ formatMoney(quote.fl_subtotal) }}</span>
+                </div>
+
+                <div v-if="quote.fl_descuento_valor > 0" class="d-flex justify-space-between text-body-2 mb-2 text-error">
+                  <span>Descuento ({{ quote.fl_descuento_porcentaje }}%):</span>
+                  <span class="font-weight-bold">- $ {{ formatMoney(quote.fl_descuento_valor) }}</span>
+                </div>
+
+                <div v-if="quote.fl_iva_valor > 0" class="d-flex justify-space-between text-body-2 mb-2">
+                  <span class="text-secondary">IVA ({{ quote.fl_iva_porcentaje }}%):</span>
+                  <span class="font-weight-bold">$ {{ formatMoney(quote.fl_iva_valor) }}</span>
+                </div>
+
+                <v-divider class="my-3"></v-divider>
+
+                <div class="d-flex justify-space-between align-center text-h5 text-primary">
+                  <span class="font-weight-bold">TOTAL INVERSIÓN:</span>
+                  <span class="font-weight-black">$ {{ formatMoney(quote.fl_total_cost) }}</span>
+                </div>
+
+                <div v-if="quote.fl_anticipo_valor > 0" class="d-flex justify-space-between align-center mt-3 pt-2 border-top">
+                  <span class="text-caption font-weight-bold text-secondary">Anticipo Requerido ({{ quote.fl_anticipo_porcentaje }}%):</span>
+                  <v-chip color="success" size="small" variant="flat" class="font-weight-bold">
+                    $ {{ formatMoney(quote.fl_anticipo_valor) }}
+                  </v-chip>
+                </div>
+              </div>
             </v-col>
           </v-row>
 
-          <!-- DIAGNÓSTICO / MOTIVO DE CONSULTA -->
-          <h3 class="text-subtitle-1 font-weight-bold mb-3 text-secondary">DIAGNÓSTICO / MOTIVO DE CONSULTA</h3>
-          <div class="mb-6 detail-box">
-            <p class="text-body-2">{{ quote.tx_diagnostico || 'No especificado.' }}</p>
-          </div>
-
-          <!-- DETALLE DE LA COTIZACIÓN (TABLA) -->
-          <h3 class="text-subtitle-1 font-weight-bold mb-3 text-secondary">DETALLE DE LA COTIZACIÓN</h3>
-          <v-table density="compact" class="items-table mb-6">
-            <thead>
-              <tr>
-                <th v-if="quote.in_mostrar_codigos" class="text-caption font-weight-bold" width="80">CÓDIGO</th>
-                <th class="text-caption font-weight-bold">PROCEDIMIENTO / SERVICIO</th>
-                <th class="text-caption font-weight-bold text-center" width="70">CANT.</th>
-                <th class="text-caption font-weight-bold text-right" width="100">VALOR UNIT.</th>
-                <th class="text-caption font-weight-bold text-right" width="120">SUBTOTAL</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(item, index) in quote.items" :key="index">
-                <td v-if="quote.in_mostrar_codigos">{{ item.tx_codigo || '-' }}</td>
-                <td>
-                  <p class="font-weight-medium">{{ item.tx_servicio }}</p>
-                  <p v-if="item.tx_descripcion" class="text-caption text-medium-emphasis">{{ item.tx_descripcion }}</p>
-                </td>
-                <td class="text-center">{{ item.nu_cantidad }}</td>
-                <td class="text-right">$ {{ formatMoney(item.fl_valor_unitario) }}</td>
-                <td class="text-right font-weight-bold">$ {{ formatMoney(item.fl_subtotal) }}</td>
-              </tr>
-            </tbody>
-          </v-table>
-
-          <!-- RESUMEN DE COSTOS -->
-          <h3 class="text-subtitle-1 font-weight-bold mb-3 text-secondary">RESUMEN DE COSTOS</h3>
-          <div class="summary-box mb-6">
-            <div class="d-flex justify-space-between text-body-1 mb-1">
-              <span>Subtotal</span>
-              <span class="font-weight-bold">$ {{ formatMoney(quote.fl_subtotal) }}</span>
+          <!-- SECCIÓN 5: CONDICIONES MÉDICAS Y LEGALES -->
+          <div v-if="quote.tx_condiciones_medicas" class="mb-6">
+            <div class="d-flex align-center mb-2">
+              <v-icon color="primary" class="mr-2" size="20">mdi-file-certificate-outline</v-icon>
+              <h3 class="text-subtitle-1 font-weight-bold text-primary">CONDICIONES MÉDICAS Y LEGALES</h3>
             </div>
-            <div v-if="quote.fl_descuento_valor > 0" class="d-flex justify-space-between text-body-1 mb-1 text-error">
-              <span>Descuento ({{ quote.fl_descuento_porcentaje }}%)</span>
-              <span class="font-weight-bold">- $ {{ formatMoney(quote.fl_descuento_valor) }}</span>
-            </div>
-            <div v-if="quote.fl_iva_valor > 0" class="d-flex justify-space-between text-body-1 mb-1">
-              <span>IVA ({{ quote.fl_iva_porcentaje }}%)</span>
-              <span class="font-weight-bold">$ {{ formatMoney(quote.fl_iva_valor) }}</span>
-            </div>
-            <v-divider class="my-2" thickness="2"></v-divider>
-            <div class="d-flex justify-space-between text-h6 text-primary mb-1">
-              <span class="font-weight-bold">TOTAL GENERAL</span>
-              <span class="font-weight-bold">$ {{ formatMoney(quote.fl_total_cost) }}</span>
-            </div>
-            <div v-if="quote.fl_anticipo_valor > 0" class="d-flex justify-space-between text-subtitle-1 text-secondary mt-2">
-              <span>Anticipo Requerido ({{ quote.fl_anticipo_porcentaje }}%)</span>
-              <span class="font-weight-bold">$ {{ formatMoney(quote.fl_anticipo_valor) }}</span>
+            <div class="detail-box pa-4 rounded-lg border bg-surface pre-wrap">
+              <p class="text-body-2 mb-0">{{ quote.tx_condiciones_medicas }}</p>
             </div>
           </div>
 
-          <!-- CONDICIONES DE PAGO -->
-          <h3 class="text-subtitle-1 font-weight-bold mb-3 text-secondary">CONDICIONES DE PAGO</h3>
-          <div class="mb-6 detail-box">
-            <p class="text-body-2"><strong>Forma de Pago:</strong> {{ quote.tx_forma_pago || 'A convenir' }}</p>
-            <p class="text-body-2"><strong>Validez de la Cotización:</strong> {{ quote.in_validez_dias }} días a partir de la fecha de emisión.</p>
-            <p class="text-body-2"><strong>Fecha de Vencimiento:</strong> {{ formatDate(quote.date_vencimiento) }}</p>
+          <!-- SECCIÓN 6: OBSERVACIONES CLÍNICAS -->
+          <div v-if="quote.tx_observaciones_clinicas" class="mb-8">
+            <div class="d-flex align-center mb-2">
+              <v-icon color="primary" class="mr-2" size="20">mdi-comment-text-outline</v-icon>
+              <h3 class="text-subtitle-1 font-weight-bold text-primary">OBSERVACIONES CLÍNICAS</h3>
+            </div>
+            <div class="detail-box pa-4 rounded-lg border bg-surface pre-wrap">
+              <p class="text-body-2 mb-0">{{ quote.tx_observaciones_clinicas }}</p>
+            </div>
           </div>
 
-          <!-- CONDICIONES MÉDICAS Y LEGALES -->
-          <h3 class="text-subtitle-1 font-weight-bold mb-3 text-secondary">CONDICIONES MÉDICAS Y LEGALES</h3>
-          <div class="mb-6 detail-box pre-wrap">
-            <p class="text-body-2">{{ quote.tx_condiciones_medicas || 'No se especificaron condiciones médicas o legales.' }}</p>
-          </div>
-
-          <!-- OBSERVACIONES CLÍNICAS -->
-          <h3 class="text-subtitle-1 font-weight-bold mb-3 text-secondary">OBSERVACIONES CLÍNICAS</h3>
-          <div class="mb-8 detail-box pre-wrap">
-            <p class="text-body-2">{{ quote.tx_observaciones_clinicas || 'No hay observaciones clínicas.' }}</p>
-          </div>
-
-          <!-- FIRMA -->
-          <div class="text-center signature-area">
-            <div v-if="quote.tx_firma_doctor" class="signature-img-container">
+          <!-- SECCIÓN 7: FIRMA Y SELLO MÉDICO -->
+          <div class="text-center signature-area pt-8">
+            <div v-if="quote.tx_firma_doctor" class="signature-img-container mb-2">
               <img :src="quote.tx_firma_doctor" alt="Firma Médico" class="signature-img" />
             </div>
             <div class="signature-line"></div>
-            <p class="text-subtitle-1 font-weight-bold mb-1">Dr. {{ quote.doctor_first_name }} {{ quote.doctor_last_name }}</p>
-            <p class="text-caption">Reg. Médico: {{ quote.doctor_registration || 'N/A' }}</p>
-            <p class="text-caption">Especialidad: {{ quote.doctor_specialty || 'N/A' }}</p>
-            <p class="text-caption text-primary mt-2 font-weight-bold">Firma Digital del Médico Responsable</p>
+            <h4 class="text-subtitle-1 font-weight-bold text-primary mb-1">
+              Dr(a). {{ quote.doctor_first_name }} {{ quote.doctor_last_name }}
+            </h4>
+            <p class="text-caption text-secondary mb-0"><strong>Reg. Médico / Col:</strong> {{ quote.doctor_registration || 'N/A' }}</p>
+            <p class="text-caption text-secondary mb-0"><strong>Especialidad:</strong> {{ quote.doctor_specialty || 'Cirugía / Medicina Estética' }}</p>
+            <v-chip color="primary" size="x-small" variant="tonal" class="mt-2 font-weight-bold">
+              <v-icon start size="12">mdi-check-decagram</v-icon> Firma Digital y Sello Médico Autorizado
+            </v-chip>
           </div>
-
         </v-card>
 
-        <v-alert v-else type="error" color="error" variant="tonal" rounded="lg" class="mt-4">
-          No se pudo cargar la cotización. Verifique el ID o intente de nuevo.
+        <v-alert v-else type="error" color="error" variant="tonal" rounded="xl" class="mt-4">
+          No se pudo cargar el documento de cotización. Verifique el ID.
         </v-alert>
-
-        <div class="d-flex justify-center mt-6">
-          <v-btn color="secondary" variant="tonal" class="mx-2" @click="router.back()">
-            <v-icon start>mdi-arrow-left</v-icon> Volver
-          </v-btn>
-          <v-btn color="primary" class="mx-2" @click="printQuotation">
-            <v-icon start>mdi-printer</v-icon> Imprimir / Exportar PDF
-          </v-btn>
-        </div>
       </v-col>
     </v-row>
   </v-container>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
 import { useNotification } from '@/utils/useNotification';
@@ -224,8 +294,8 @@ interface QuoteData {
   doctor_specialty?: string;
 
   // Config settings
-  in_mostrar_codigos?: number;
-  in_mostrar_logo?: number;
+  in_mostrar_codigos?: boolean | number;
+  in_mostrar_logo?: boolean | number;
 
   items: QuoteItem[];
 }
@@ -249,7 +319,6 @@ onMounted(async () => {
     const response = await axios.get(API.QUOTES.PRINT(idQuote as string));
     if (response.data.status && response.data.data) {
       quote.value = response.data.data;
-      // Convertir 0/1 a boolean para mostrar/ocultar en la vista
       if (quote.value) {
         quote.value.in_mostrar_codigos = !!quote.value.in_mostrar_codigos;
         quote.value.in_mostrar_logo = !!quote.value.in_mostrar_logo;
@@ -294,112 +363,96 @@ const printQuotation = () => {
 
 <style scoped>
 .print-preview-container {
-  background-color: #f0f2f5; /* Un fondo suave para la previsualización */
   min-height: 100vh;
-  padding-top: 20px;
-  padding-bottom: 20px;
 }
 
 .quotation-card {
-  background-color: #ffffff;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  font-family: 'Roboto', sans-serif; /* Fuente profesional */
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05) !important;
 }
 
 .business-logo {
-  max-width: 120px;
-  height: auto;
+  max-width: 140px;
+  max-height: 70px;
+  object-fit: contain;
 }
 
-.patient-data-card p, .detail-box p {
-  margin-bottom: 4px;
+.folio-badge {
+  min-width: 220px;
 }
 
 .items-table {
   width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 1.5rem;
-}
-
-.items-table th,
-.items-table td {
-  border: 1px solid #e0e0e0;
-  padding: 8px 12px;
 }
 
 .items-table th {
-  background-color: #f5f5f5;
-  text-align: left;
-  font-weight: bold;
+  background-color: rgb(var(--v-theme-bglight)) !important;
+  color: rgb(var(--v-theme-textSecondary)) !important;
+  font-weight: 700 !important;
+  height: 44px !important;
+  border-bottom: 2px solid rgb(var(--v-theme-borderColor)) !important;
 }
 
-.summary-box {
-  background-color: #f9f9f9;
-  border: 1px solid #e0e0e0;
-  padding: 1rem;
-  border-radius: 8px;
+.items-table td {
+  border-bottom: 1px solid rgb(var(--v-theme-borderColor)) !important;
+  padding: 12px 16px !important;
+}
+
+.item-row:hover {
+  background-color: rgb(var(--v-theme-hoverColor)) !important;
 }
 
 .signature-area {
-  margin-top: 4rem;
-  padding-top: 2rem;
+  margin-top: 3rem;
   position: relative;
 }
 
 .signature-line {
-  border-top: 1px solid #000;
-  width: 250px;
-  margin: 0 auto 8px auto;
+  border-top: 2px solid #18B6C9;
+  width: 240px;
+  margin: 0 auto 12px auto;
 }
 
 .signature-img-container {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 200px; /* Ancho estimado para la firma */
-  height: 80px; /* Alto estimado para la firma */
+  margin-bottom: 10px;
   display: flex;
   justify-content: center;
   align-items: center;
-  overflow: hidden;
 }
 
 .signature-img {
-  max-width: 100%;
-  max-height: 100%;
+  max-height: 75px;
   object-fit: contain;
 }
 
 .pre-wrap {
-  white-space: pre-wrap; /* Para respetar saltos de línea en textareas */
+  white-space: pre-wrap;
 }
 
+/* REGLAS DE IMPRESIÓN OFICIAL (PDF) */
 @media print {
   body * {
     visibility: hidden;
   }
   .print-preview-container, .print-preview-container * {
     visibility: visible;
-    overflow: visible !important;
   }
   .print-preview-container {
     position: absolute;
     left: 0;
     top: 0;
     width: 100%;
-    padding: 0;
-    margin: 0;
-    box-shadow: none;
-    background-color: #ffffff;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: white !important;
   }
   .quotation-card {
     box-shadow: none !important;
     border: none !important;
-    margin: 0 !important;
-    padding: 20px !important;
+    background: white !important;
+    color: black !important;
+    padding: 0 !important;
   }
-  .v-navigation-drawer, .v-app-bar, .v-footer, .v-btn {
+  .no-print, .v-navigation-drawer, .v-app-bar, .v-footer, .v-btn {
     display: none !important;
   }
 }

@@ -31,12 +31,16 @@ export default createVuetify({
   },
 
   defaults: {
-    VCard: { rounded: 'xl' },
-    VTextField: { variant: 'outlined', density: 'comfortable', color: 'primary' },
-    VTextarea: { variant: 'outlined', density: 'comfortable', color: 'primary' },
-    VSelect: { variant: 'outlined', density: 'comfortable', color: 'primary' },
-    VListItem: { minHeight: '45px' },
-    VTooltip: { location: 'top' }
+    VCard: { rounded: 'xl', elevation: 0 },
+    VBtn: { rounded: 'lg', elevation: 0 },
+    VTextField: { variant: 'outlined', density: 'comfortable', color: 'primary', rounded: 'lg' },
+    VTextarea: { variant: 'outlined', density: 'comfortable', color: 'primary', rounded: 'lg' },
+    VSelect: { variant: 'outlined', density: 'comfortable', color: 'primary', rounded: 'lg' },
+    VAutocomplete: { variant: 'outlined', density: 'comfortable', color: 'primary', rounded: 'lg' },
+    VDialog: { rounded: 'xl' },
+    VListItem: { minHeight: '45px', rounded: 'lg' },
+    VTooltip: { location: 'top' },
+    VChip: { rounded: 'lg' }
   }
 });
 

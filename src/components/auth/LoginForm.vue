@@ -99,22 +99,23 @@ const handleLogin = async () => {
 
 <template>
     <div class="text-center mb-6">
-        <h2 class="text-h4 font-weight-bold mb-2 text-primary">Bienvenido</h2>
-        <p class="text-body-2 text-secondary">Gestione tú clínica con facilidad</p>
+        <h2 class="text-h4 font-weight-bold mb-1 text-primary">Bienvenido</h2>
+        <p class="text-body-2 text-secondary">Gestione su clínica con elegancia y facilidad</p>
     </div>
 
     <v-form @submit.prevent="handleLogin">
-        <v-label class="text-subtitle-1 font-weight-semibold mb-1">Usuario</v-label>
+        <v-label class="text-caption font-weight-bold text-uppercase text-secondary mb-1">Usuario</v-label>
         <v-text-field
             v-model="tx_username"
             variant="outlined"
             color="primary"
             density="comfortable"
             prepend-inner-icon="mdi-account-outline"
-            class="mb-2"
+            class="mb-3"
+            rounded="lg"
         ></v-text-field>
 
-        <v-label class="text-subtitle-1 font-weight-semibold mb-1">Contraseña</v-label>
+        <v-label class="text-caption font-weight-bold text-uppercase text-secondary mb-1">Contraseña</v-label>
         <v-text-field
             v-model="tx_password"
             :type="showPassword ? 'text' : 'password'"
@@ -124,6 +125,8 @@ const handleLogin = async () => {
             prepend-inner-icon="mdi-lock-outline"
             :append-inner-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
             @click:append-inner="showPassword = !showPassword"
+            class="mb-2"
+            rounded="lg"
         ></v-text-field>
 
         <!-- Selector de empresa (visible solo si el usuario existe en múltiples empresas) -->
@@ -141,38 +144,41 @@ const handleLogin = async () => {
             density="comfortable"
             prepend-inner-icon="mdi-office-building"
             :rules="[v => !!v || 'Debe seleccionar una empresa']"
+            rounded="lg"
           ></v-select>
         </div>
 
         <div class="d-flex align-center justify-space-between mb-6">
-            <v-checkbox label="Recuerdame" color="primary" hide-details density="compact"></v-checkbox>
-            <a href="#" class="text-primary text-body-2 font-weight-bold text-decoration-none">Olvidó sus credenciales?</a>
+            <v-checkbox label="Recuérdame" color="primary" hide-details density="compact"></v-checkbox>
+            <a href="#" class="text-primary text-body-2 font-weight-bold text-decoration-none">¿Olvidó sus credenciales?</a>
         </div>
 
-        <v-btn block size="large" color="primary" type="submit" :loading="loading" class="login-btn mb-6">
+        <v-btn block size="large" type="submit" :loading="loading" class="login-btn mb-4">
             INGRESAR
         </v-btn>
     </v-form>
-
-    <!-- Registro deshabilitado -->
-    <!-- <div class="text-center mt-4 mb-6">
-        <div class="text-center">
-            <RouterLink to="/register-business" class="register-link">
-            <v-icon start size="18">mdi-store-plus-outline</v-icon>
-            REGISTRAR MI CLÍNICA
-            </RouterLink>
-        </div>
-    </div> -->
 </template>
 
 <style scoped>
 .login-btn {
     height: 50px !important;
-    border-radius: 12px !important;
+    border-radius: 16px !important;
+    background: linear-gradient(135deg, #18B6C9 0%, #0F766E 100%) !important;
+    color: #FFFFFF !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.5px !important;
+    box-shadow: 0 8px 20px rgba(24, 182, 201, 0.3) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
+
+.login-btn:hover {
+    box-shadow: 0 12px 25px rgba(24, 182, 201, 0.4) !important;
+    transform: translateY(-2px);
+}
+
 .employee-btn {
     height: auto !important;
-    border-radius: 12px !important;
+    border-radius: 16px !important;
     text-transform: none !important;
 }
 :deep(.v-label) {
@@ -181,18 +187,18 @@ const handleLogin = async () => {
 
 .register-link {
   text-decoration: none;
-  color: rgb(var(--v-theme-primary));
-  font-weight: 800;
+  color: #18B6C9;
+  font-weight: 700;
   font-size: 0.75rem;
-  letter-spacing: 1.5px;
+  letter-spacing: 1px;
   padding: 10px 20px;
-  border: 2px solid rgb(var(--v-theme-primary));
+  border: 2px solid #18B6C9;
   border-radius: 50px;
   transition: all 0.3s;
 }
 
 .register-link:hover {
-  background: rgb(var(--v-theme-primary));
+  background: #18B6C9;
   color: white;
 }
 </style>

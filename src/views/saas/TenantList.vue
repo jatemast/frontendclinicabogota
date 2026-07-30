@@ -3,7 +3,6 @@ import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 import { useNotification } from '@/utils/useNotification';
-import UiParentCard from '@/components/shared/UiParentCard.vue';
 import Swal from 'sweetalert2';
 import { API } from '@/api/endpoints';
 
@@ -14,24 +13,22 @@ interface Module {
 }
 
 const router = useRouter();
-
 const { notify } = useNotification();
 const loading = ref(false);
-const tenants = ref([]);
+const tenants = ref<any[]>([]);
 const API_BASE = import.meta.env.VITE_API_URL;
 const dialog = ref(false);
-const isRecycleBin = ref(false); // Toggle to show deleted tenants
-const search = ref(''); // Real-time search
+const isRecycleBin = ref(false);
+const search = ref('');
 
-// Módulos disponibles para asignar permisos
+// Módulos disponibles
 const modules = ref<Module[]>([]);
 const selectedModules = ref<number[]>([]);
 const loadingModules = ref(false);
 
-// Agrupar módulos por tx_module (ej: Gestión, Reportes, etc.)
 const groupedModules = computed(() => {
     return modules.value.reduce((acc, item) => {
-        const group = item.tx_module || 'Otros';
+        const group = item.tx_module || 'General';
         if (!acc[group]) acc[group] = [];
         acc[group].push(item);
         return acc;
@@ -65,29 +62,22 @@ const form = ref({
 });
 
 const isEditing = computed(() => form.value.id !== null);
-const page = computed(() => ({ title: isRecycleBin.value ? 'Papelera de Reciclaje' : 'Empresas (Tenants)' }));
 
 const fetchTenants = async () => {
     loading.value = true;
     try {
-        console.log('🔄 Fetching tenants...');
         const response = await axios.get(`${API_BASE}api/saas/businesses`);
-        console.log('📦 API Response:', response.data);
         if (response.data.status) {
-            const allTenants = response.data.data;
-            console.log('📋 All tenants from API:', allTenants);
+            const allTenants = response.data.data || [];
             if (isRecycleBin.value) {
                 tenants.value = allTenants.filter((t: any) => t.is_deleted == 1);
             } else {
                 tenants.value = allTenants.filter((t: any) => t.is_deleted == 0);
             }
-            console.log('✅ Tenants asignados:', tenants.value);
-            console.log('🔢 Cantidad:', tenants.value.length);
         } else {
             notify('error', response.data.msg);
         }
     } catch (error) {
-        console.error('❌ Error en fetchTenants:', error);
         notify('error', 'Error al cargar empresas');
     } finally {
         loading.value = false;
@@ -116,20 +106,14 @@ const fetchModules = async () => {
 const openAddModal = async () => {
     form.value = { id: null, tx_name: '', tx_owner: '', tx_owner_email: '', tx_owner_phone: '', tx_address: '', date_validity: '', admin_password: '', tx_logo: null };
     selectedModules.value = [];
-    // Cargar módulos disponibles
     await fetchModules();
     dialog.value = true;
 };
 
 const extractTenantData = (item: any): any => {
-    // En Vuetify 3, el slot item.actions expone { item: rawData, index, columns }
-    // También puede llegar directamente el rawData
     if (!item) return null;
-    // Si tiene propiedad 'item' (wrapper de Vuetify), extraer los datos
     if (item.item && (item.item.id !== undefined)) return item.item;
-    // Si tiene propiedad 'raw' (otra forma del wrapper)
     if (item.raw && (item.raw.id !== undefined)) return item.raw;
-    // Si ya es el objeto directamente
     if (item.id !== undefined) return item;
     return null;
 };
@@ -148,13 +132,11 @@ const openEditModal = async (tenantInput: any) => {
         tx_owner_phone: tenant.tx_owner_phone,
         tx_address: tenant.tx_address,
         date_validity: tenant.date_validity,
-        admin_password: '', // Leave blank unless they want to change
+        admin_password: '',
         tx_logo: null
     };
     selectedModules.value = [];
-    // Abrir el modal inmediatamente
     dialog.value = true;
-    // Cargar módulos disponibles y los permisos actuales del tenant en segundo plano
     fetchModules();
     try {
         const res = await axios.get(`${API_BASE}api/saas/businesses/${tenant.id}/permissions`);
@@ -170,12 +152,10 @@ const saveTenant = async () => {
     loading.value = true;
     try {
         const hasFile = form.value.tx_logo && Array.isArray(form.value.tx_logo) && form.value.tx_logo.length > 0;
-        
         let response;
         const url = isEditing.value ? `${API_BASE}api/saas/businesses/${form.value.id}` : `${API_BASE}api/saas/businesses`;
 
         if (hasFile) {
-            // Si hay archivo, usar FormData
             const formData = new FormData();
             Object.keys(form.value).forEach(key => {
                 const val = form.value[key as keyof typeof form.value];
@@ -194,7 +174,6 @@ const saveTenant = async () => {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
         } else {
-            // Sin archivo, enviar como JSON
             const payload: Record<string, any> = {};
             Object.keys(form.value).forEach(key => {
                 const val = form.value[key as keyof typeof form.value];
@@ -224,17 +203,14 @@ const saveTenant = async () => {
 
 const softDeleteTenant = async (tenantInput: any) => {
     const tenant = extractTenantData(tenantInput);
-    if (!tenant || !tenant.id) {
-        notify('error', 'No se pudo identificar la empresa seleccionada');
-        return;
-    }
+    if (!tenant || !tenant.id) return;
     const result = await Swal.fire({
         title: '¿Mover a la papelera?',
         text: `La empresa "${tenant.tx_name || 'Sin nombre'}" podrá ser restaurada posteriormente.`,
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
+        confirmButtonColor: '#EF4444',
+        cancelButtonColor: '#64748B',
         confirmButtonText: 'Sí, mover a papelera',
         cancelButtonText: 'Cancelar'
     });
@@ -243,7 +219,7 @@ const softDeleteTenant = async (tenantInput: any) => {
         try {
             const res = await axios.delete(`${API_BASE}api/saas/businesses/${tenant.id}`);
             if (res.data.status) {
-                Swal.fire('¡Eliminado!', res.data.msg, 'success');
+                Swal.fire('¡En papelera!', res.data.msg, 'success');
                 fetchTenants();
             }
         } catch (error) {
@@ -254,17 +230,14 @@ const softDeleteTenant = async (tenantInput: any) => {
 
 const restoreTenant = async (tenantInput: any) => {
     const tenant = extractTenantData(tenantInput);
-    if (!tenant || !tenant.id) {
-        notify('error', 'No se pudo identificar la empresa seleccionada');
-        return;
-    }
+    if (!tenant || !tenant.id) return;
     const result = await Swal.fire({
         title: '¿Restaurar empresa?',
         text: `La empresa "${tenant.tx_name || 'Sin nombre'}" volverá a estar activa.`,
         icon: 'question',
         showCancelButton: true,
-        confirmButtonColor: '#28a745',
-        cancelButtonColor: '#3085d6',
+        confirmButtonColor: '#10B981',
+        cancelButtonColor: '#64748B',
         confirmButtonText: 'Sí, restaurar',
         cancelButtonText: 'Cancelar'
     });
@@ -284,17 +257,14 @@ const restoreTenant = async (tenantInput: any) => {
 
 const forceDeleteTenant = async (tenantInput: any) => {
     const tenant = extractTenantData(tenantInput);
-    if (!tenant || !tenant.id) {
-        notify('error', 'No se pudo identificar la empresa seleccionada');
-        return;
-    }
+    if (!tenant || !tenant.id) return;
     const result = await Swal.fire({
         title: '¿Eliminar permanentemente?',
-        text: `¡ATENCIÓN! La empresa "${tenant.tx_name || 'Sin nombre'}" será borrada físicamente de la base de datos junto con toda su información. Esta acción NO se puede deshacer.`,
+        text: `¡ATENCIÓN! La empresa "${tenant.tx_name || 'Sin nombre'}" será borrada físicamente de la base de datos.`,
         icon: 'error',
         showCancelButton: true,
-        confirmButtonColor: '#dc3545',
-        cancelButtonColor: '#6c757d',
+        confirmButtonColor: '#EF4444',
+        cancelButtonColor: '#64748B',
         confirmButtonText: 'ELIMINAR DEFINITIVAMENTE',
         cancelButtonText: 'Cancelar'
     });
@@ -314,27 +284,21 @@ const forceDeleteTenant = async (tenantInput: any) => {
 
 const viewTenantDetail = (tenantInput: any) => {
     const tenant = extractTenantData(tenantInput);
-    if (!tenant || !tenant.id) {
-        notify('error', 'No se pudo identificar la empresa seleccionada');
-        return;
-    }
+    if (!tenant || !tenant.id) return;
     router.push(`/saas/tenants/${tenant.id}`);
 };
 
 const impersonateTenant = async (tenantInput: any) => {
     const tenant = extractTenantData(tenantInput);
-    if (!tenant || !tenant.id) {
-        notify('error', 'No se pudo identificar la empresa seleccionada');
-        return;
-    }
+    if (!tenant || !tenant.id) return;
     const result = await Swal.fire({
         title: `Ver como ${tenant.tx_name || 'Sin nombre'}`,
-        text: `Vas a ingresar al sistema como administrador de esta empresa. Podrás regresar al modo Master en cualquier momento.`,
+        text: `Ingresarás como administrador de esta empresa. Podrás regresar al modo Master cuando quieras.`,
         icon: 'info',
         showCancelButton: true,
-        confirmButtonColor: '#17a2b8',
-        cancelButtonColor: '#6c757d',
-        confirmButtonText: 'Entrar como cliente',
+        confirmButtonColor: '#18B6C9',
+        cancelButtonColor: '#64748B',
+        confirmButtonText: 'Ingresar como cliente',
         cancelButtonText: 'Cancelar'
     });
 
@@ -343,24 +307,34 @@ const impersonateTenant = async (tenantInput: any) => {
             const res = await axios.post(API.SAAS.IMPERSONATE(tenant.id));
             if (res.data.status) {
                 const currentToken = localStorage.getItem('access_token');
-                // Guardar el token maestro para poder volver
                 localStorage.setItem('master_token', currentToken as string);
-                
-                // Reemplazar la sesión actual
                 localStorage.setItem('access_token', res.data.access_token);
                 localStorage.setItem('token', res.data.access_token);
                 localStorage.setItem('id_business', tenant.id);
-                localStorage.setItem('is_master', '0'); // Ya no eres master en la sesión actual
+                localStorage.setItem('is_master', '0');
                 
                 Swal.fire('Cambiando de Modo...', '', 'success');
                 setTimeout(() => {
                     window.location.href = '/';
-                }, 1000);
+                }, 800);
             }
         } catch (error) {
             notify('error', 'No se pudo iniciar la impersonación');
         }
     }
+};
+
+const getRow = (item: any): any => {
+    if (!item) return {};
+    if (item.raw) return item.raw;
+    if (item.item) return item.item;
+    return item;
+};
+
+const formatDateDisplay = (dateStr: string) => {
+    if (!dateStr) return 'Sin fecha';
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
 };
 
 onMounted(() => {
@@ -369,199 +343,268 @@ onMounted(() => {
 </script>
 
 <template>
-    <div class="d-flex justify-space-between align-center mb-4">
-        <div class="text-h5 font-weight-bold">
-            {{ page.title }}
+  <v-container fluid class="pa-6">
+    <!-- Header Banner LogicSurgi Style -->
+    <v-card elevation="0" rounded="xl" class="border bg-surface mb-6 pa-5">
+      <div class="d-flex flex-column flex-sm-row align-sm-center justify-space-between gap-4">
+        <div class="d-flex align-center gap-4">
+          <v-avatar color="lightprimary" size="56" rounded="lg">
+            <v-icon color="primary" size="28">mdi-domain</v-icon>
+          </v-avatar>
+          <div>
+            <h2 class="text-h4 font-weight-bold text-primary mb-1">
+              {{ isRecycleBin ? 'Papelera de Reciclaje' : 'Empresas Registradas (Tenants)' }}
+            </h2>
+            <p class="text-body-2 text-secondary mb-0">
+              {{ isRecycleBin ? 'Empresas eliminadas temporalmente que pueden ser restauradas.' : 'Administra los clientes SaaS, licencias y módulos del sistema.' }}
+            </p>
+          </div>
         </div>
-        <div>
-            <v-btn 
-                :color="isRecycleBin ? 'primary' : 'error'" 
-                :prepend-icon="isRecycleBin ? 'mdi-arrow-left' : 'mdi-delete'" 
-                variant="outlined" 
-                class="mr-2"
-                @click="toggleRecycleBin"
-            >
-                {{ isRecycleBin ? 'Ver Empresas Activas' : 'Papelera de Reciclaje' }}
-            </v-btn>
-            <v-btn color="primary" prepend-icon="mdi-plus" @click="openAddModal" v-if="!isRecycleBin">
-                Nueva Empresa
-            </v-btn>
-        </div>
-    </div>
 
-    <v-row>
-        <v-col cols="12">
-            <UiParentCard title="Administración de Clientes">
-                <!-- Buscador rápido -->
-                <template v-slot:action>
-                    <v-text-field
-                        v-model="search"
-                        append-inner-icon="mdi-magnify"
-                        label="Buscar cliente..."
-                        single-line
-                        hide-details
-                        variant="outlined"
+        <div class="d-flex align-center gap-3">
+          <v-btn
+            :color="isRecycleBin ? 'primary' : 'error'"
+            variant="tonal"
+            rounded="lg"
+            class="font-weight-bold"
+            @click="toggleRecycleBin"
+          >
+            <v-icon start size="18">{{ isRecycleBin ? 'mdi-arrow-left' : 'mdi-delete-outline' }}</v-icon>
+            {{ isRecycleBin ? 'Ver Empresas Activas' : 'Papelera' }}
+          </v-btn>
+
+          <v-btn
+            v-if="!isRecycleBin"
+            color="primary"
+            variant="flat"
+            rounded="lg"
+            class="font-weight-bold px-5"
+            @click="openAddModal"
+          >
+            <v-icon start size="18">mdi-plus</v-icon>
+            Nueva Empresa
+          </v-btn>
+        </div>
+      </div>
+    </v-card>
+
+    <!-- Content Card & Data Table -->
+    <v-card elevation="0" rounded="xl" class="border bg-surface pa-5">
+      <div class="d-flex flex-column flex-sm-row align-sm-center justify-space-between gap-4 mb-5">
+        <div class="d-flex align-center gap-2">
+          <v-chip color="primary" variant="tonal" class="font-weight-bold">
+            Total: {{ tenants.length }}
+          </v-chip>
+        </div>
+
+        <!-- Buscador estilizado -->
+        <v-text-field
+          v-model="search"
+          prepend-inner-icon="mdi-magnify"
+          placeholder="Buscar por empresa, propietario o email..."
+          single-line
+          hide-details
+          variant="outlined"
+          density="comfortable"
+          rounded="lg"
+          style="max-width: 360px;"
+        ></v-text-field>
+      </div>
+
+      <v-data-table
+        :headers="[
+          { title: 'Empresa', align: 'start', key: 'tx_name' },
+          { title: 'Propietario', align: 'start', key: 'tx_owner' },
+          { title: 'Teléfono / Dirección', align: 'start', key: 'tx_owner_phone' },
+          { title: 'Válido Hasta', align: 'start', key: 'date_validity' },
+          { title: 'Estado', align: 'center', key: 'is_deleted' },
+          { title: 'Acciones', align: 'end', key: 'actions', sortable: false }
+        ]"
+        :items="tenants"
+        :search="search"
+        class="elevation-0 bg-transparent"
+        :loading="loading"
+        loading-text="Cargando empresas..."
+        no-data-text="No hay empresas registradas"
+      >
+        <!-- Columna Empresa con Avatar / Logo -->
+        <template v-slot:item.tx_name="{ item }">
+          <div class="d-flex align-center py-2">
+            <v-avatar size="42" rounded="lg" color="lightprimary" class="mr-3 border">
+              <v-img v-if="getRow(item).tx_logo || getRow(item).tx_logo_url" :src="getRow(item).tx_logo_url || getRow(item).tx_logo"></v-img>
+              <span v-else class="text-subtitle-1 font-weight-bold text-primary">{{ (getRow(item).tx_name || 'E').charAt(0).toUpperCase() }}</span>
+            </v-avatar>
+            <div>
+              <div class="font-weight-bold text-subtitle-2 text-primary">{{ getRow(item).tx_name || 'Sin nombre' }}</div>
+              <div class="text-caption text-secondary">{{ getRow(item).tx_owner_email || getRow(item).admin_email || getRow(item).email || 'Sin email registrado' }}</div>
+            </div>
+          </div>
+        </template>
+
+        <!-- Columna Propietario -->
+        <template v-slot:item.tx_owner="{ item }">
+          <div class="font-weight-medium text-body-2">{{ getRow(item).tx_owner || 'Sin asignar' }}</div>
+        </template>
+
+        <!-- Columna Teléfono / Dirección -->
+        <template v-slot:item.tx_owner_phone="{ item }">
+          <div>
+            <div class="font-weight-medium text-caption">{{ getRow(item).tx_owner_phone || getRow(item).phone || getRow(item).tx_phone || 'N/A' }}</div>
+            <div class="text-caption text-secondary">{{ getRow(item).tx_address || 'Sin dirección' }}</div>
+          </div>
+        </template>
+
+        <!-- Columna Válido Hasta -->
+        <template v-slot:item.date_validity="{ item }">
+          <v-chip color="info" size="small" variant="tonal" class="font-weight-bold">
+            <v-icon start size="14">mdi-calendar-clock</v-icon>
+            {{ formatDateDisplay(getRow(item).date_validity) }}
+          </v-chip>
+        </template>
+
+        <!-- Columna Estado -->
+        <template v-slot:item.is_deleted="{ item }">
+          <v-chip v-if="getRow(item).is_deleted == 1" color="error" size="small" variant="flat" class="font-weight-bold">
+            Eliminado
+          </v-chip>
+          <v-chip v-else color="success" size="small" variant="flat" class="font-weight-bold">
+            Activo
+          </v-chip>
+        </template>
+
+        <!-- Columna Acciones -->
+        <template v-slot:item.actions="{ item }">
+          <v-menu location="bottom end" transition="scale-transition">
+            <template v-slot:activator="{ props }">
+              <v-btn icon="mdi-dots-vertical" variant="tonal" color="primary" size="small" rounded="lg" v-bind="props"></v-btn>
+            </template>
+            <v-list density="comfortable" nav rounded="lg" class="elevation-4 border bg-surface">
+              <template v-if="!isRecycleBin">
+                <v-list-item prepend-icon="mdi-file-document-outline" title="Ver Información" @click="viewTenantDetail(item)"></v-list-item>
+                <v-list-item prepend-icon="mdi-incognito" title="Ingresar como Cliente" @click="impersonateTenant(item)"></v-list-item>
+                <v-list-item prepend-icon="mdi-pencil-outline" title="Editar Empresa" @click="openEditModal(item)"></v-list-item>
+                <v-divider class="my-1"></v-divider>
+                <v-list-item prepend-icon="mdi-delete-outline" base-color="error" title="Mover a Papelera" @click="softDeleteTenant(item)"></v-list-item>
+              </template>
+              <template v-else>
+                <v-list-item prepend-icon="mdi-restore" base-color="success" title="Restaurar Empresa" @click="restoreTenant(item)"></v-list-item>
+                <v-divider class="my-1"></v-divider>
+                <v-list-item prepend-icon="mdi-delete-forever" base-color="error" title="Eliminar Definitivamente" @click="forceDeleteTenant(item)"></v-list-item>
+              </template>
+            </v-list>
+          </v-menu>
+        </template>
+      </v-data-table>
+    </v-card>
+
+    <!-- Modal Formulario (Estilo LogicSurgi) -->
+    <v-dialog v-model="dialog" max-width="720" scrollable>
+      <v-card rounded="xl" class="border bg-surface">
+        <v-card-title class="pa-5 border-bottom d-flex align-center justify-space-between">
+          <div class="d-flex align-center gap-3">
+            <v-avatar color="lightprimary" size="40" rounded="lg">
+              <v-icon color="primary" size="20">{{ isEditing ? 'mdi-pencil-outline' : 'mdi-plus' }}</v-icon>
+            </v-avatar>
+            <span class="text-h5 font-weight-bold text-primary">
+              {{ isEditing ? 'Actualizar Empresa' : 'Registrar Nueva Empresa' }}
+            </span>
+          </div>
+          <v-btn icon="mdi-close" variant="text" size="small" @click="dialog = false"></v-btn>
+        </v-card-title>
+
+        <v-card-text class="pa-5">
+          <v-row>
+            <v-col cols="12" md="6">
+              <v-text-field v-model="form.tx_name" label="Nombre de la Empresa *" variant="outlined" rounded="lg" density="comfortable"></v-text-field>
+            </v-col>
+            <v-col cols="12" md="6">
+              <v-text-field v-model="form.tx_owner" label="Propietario / Director *" variant="outlined" rounded="lg" density="comfortable"></v-text-field>
+            </v-col>
+            <v-col cols="12" md="6">
+              <v-text-field v-model="form.tx_owner_email" label="Email Propietario *" variant="outlined" rounded="lg" density="comfortable"></v-text-field>
+            </v-col>
+            <v-col cols="12" md="6">
+              <v-text-field v-model="form.tx_owner_phone" label="Teléfono de Contacto" variant="outlined" rounded="lg" density="comfortable"></v-text-field>
+            </v-col>
+            <v-col cols="12">
+              <v-text-field v-model="form.tx_address" label="Dirección de la Clínica" variant="outlined" rounded="lg" density="comfortable"></v-text-field>
+            </v-col>
+            <v-col cols="12" md="6">
+              <v-text-field v-model="form.date_validity" type="date" label="Válido Hasta" variant="outlined" rounded="lg" density="comfortable"></v-text-field>
+            </v-col>
+            <v-col cols="12" md="6">
+              <v-text-field v-model="form.admin_password" :label="isEditing ? 'Nueva Contraseña (Opcional)' : 'Contraseña Admin *'" variant="outlined" rounded="lg" density="comfortable"></v-text-field>
+            </v-col>
+            <v-col cols="12">
+              <v-file-input
+                v-model="form.tx_logo"
+                accept="image/png, image/jpeg, image/jpg"
+                label="Logo de la Empresa (Opcional)"
+                variant="outlined"
+                rounded="lg"
+                prepend-inner-icon="mdi-camera"
+                prepend-icon=""
+                show-size
+                density="comfortable"
+              ></v-file-input>
+            </v-col>
+
+            <!-- Selector de Módulos -->
+            <v-col cols="12">
+              <v-divider class="mb-4"></v-divider>
+              <div class="d-flex align-center justify-space-between mb-2">
+                <span class="text-subtitle-1 font-weight-bold text-primary">Módulos Habilitados</span>
+                <v-chip size="small" color="primary" class="font-weight-bold">
+                  {{ selectedModules.length }} seleccionados
+                </v-chip>
+              </div>
+              <p class="text-caption text-secondary mb-3">
+                Marca los módulos y funcionalidades a los que este cliente tendrá acceso.
+              </p>
+
+              <v-progress-linear v-if="loadingModules" indeterminate color="primary" class="mb-3" rounded></v-progress-linear>
+              
+              <v-card v-else variant="outlined" rounded="lg" class="pa-4 bg-surface">
+                <div v-for="(groupItems, groupName) in groupedModules" :key="groupName" class="mb-3">
+                  <div class="d-flex align-center mb-1">
+                    <v-switch
+                      :model-value="isGroupSelected(groupItems)"
+                      @update:model-value="toggleGroup(groupItems)"
+                      :label="groupName"
+                      density="compact"
+                      hide-details
+                      color="primary"
+                      class="mt-0 pt-0 font-weight-bold"
+                    ></v-switch>
+                  </div>
+                  <div class="d-flex flex-wrap ml-4">
+                    <div v-for="mod in groupItems" :key="mod.id" class="mr-4 mb-1">
+                      <v-checkbox
+                        v-model="selectedModules"
+                        :value="Number(mod.id)"
+                        :label="mod.tx_name"
                         density="compact"
-                        style="max-width: 300px;"
-                    ></v-text-field>
-                </template>
+                        hide-details
+                        color="primary"
+                        class="mt-0 pt-0"
+                      ></v-checkbox>
+                    </div>
+                  </div>
+                </div>
+              </v-card>
+            </v-col>
+          </v-row>
+        </v-card-text>
 
-                <v-data-table
-                    :headers="[
-                        { title: 'ID', align: 'start', key: 'id' },
-                        { title: 'Empresa', align: 'start', key: 'tx_name' },
-                        { title: 'Propietario', align: 'start', key: 'tx_owner' },
-                        { title: 'Admin Login', align: 'start', key: 'tx_username' },
-                        { title: 'Válido Hasta', align: 'start', key: 'date_validity' },
-                        { title: 'Estado', align: 'center', key: 'is_deleted' },
-                        { title: 'Acciones', align: 'end', key: 'actions', sortable: false }
-                    ]"
-                    :items="tenants"
-                    :search="search"
-                    class="elevation-0"
-                    :loading="loading"
-                    loading-text="Cargando empresas..."
-                    no-data-text="No hay empresas registradas"
-                >
-                    <template v-slot:item.tx_name="{ item }">
-                        <div class="d-flex align-center">
-                            <v-avatar size="32" class="mr-2" color="grey-lighten-3">
-                                <v-img v-if="item?.raw?.tx_logo" :src="item?.raw?.tx_logo"></v-img>
-                                <span v-else>{{ item?.raw?.tx_name?.charAt(0) }}</span>
-                            </v-avatar>
-                            <div>
-                                <div class="font-weight-medium">{{ item?.raw?.tx_name }}</div>
-                                <div class="text-caption text-medium-emphasis">{{ item?.raw?.admin_email }}</div>
-                            </div>
-                        </div>
-                    </template>
-
-                    <template v-slot:item.is_deleted="{ item }">
-                        <v-chip v-if="item?.raw?.is_deleted == 1" color="error" size="small" variant="flat">
-                            Eliminado
-                        </v-chip>
-                        <v-chip v-else color="success" size="small" variant="flat">
-                            Activo
-                        </v-chip>
-                    </template>
-
-                    <template v-slot:item.actions="{ item }">
-                        <v-menu location="start">
-                            <template v-slot:activator="{ props }">
-                                <v-btn icon="mdi-dots-vertical" variant="text" size="small" v-bind="props"></v-btn>
-                            </template>
-                            <v-list density="compact" nav>
-                                <template v-if="!isRecycleBin">
-                                    <v-list-item prepend-icon="mdi-file-document-outline" title="Ver Información Completa" @click="viewTenantDetail(item)"></v-list-item>
-                                    <v-list-item prepend-icon="mdi-eye-outline" title="Ver como Cliente" @click="impersonateTenant(item)"></v-list-item>
-                                    <v-list-item prepend-icon="mdi-pencil-outline" title="Editar / Actualizar" @click="openEditModal(item)"></v-list-item>
-                                    <v-divider></v-divider>
-                                    <v-list-item prepend-icon="mdi-delete-outline" base-color="error" title="Mover a Papelera" @click="softDeleteTenant(item)"></v-list-item>
-                                </template>
-                                <template v-else>
-                                    <v-list-item prepend-icon="mdi-restore" base-color="success" title="Restaurar Empresa" @click="restoreTenant(item)"></v-list-item>
-                                    <v-divider></v-divider>
-                                    <v-list-item prepend-icon="mdi-delete-forever" base-color="error" title="Eliminar Permanentemente" @click="forceDeleteTenant(item)"></v-list-item>
-                                </template>
-                            </v-list>
-                        </v-menu>
-                    </template>
-                </v-data-table>
-            </UiParentCard>
-        </v-col>
-    </v-row>
-
-    <!-- Modal Formulario -->
-    <v-dialog v-model="dialog" max-width="750" scrollable>
-        <v-card>
-            <v-card-title>{{ isEditing ? 'Actualizar Empresa' : 'Registrar Nueva Empresa' }}</v-card-title>
-            <v-card-text>
-                <v-row>
-                    <v-col cols="12" md="6">
-                        <v-text-field v-model="form.tx_name" label="Nombre de la Empresa" variant="outlined"></v-text-field>
-                    </v-col>
-                    <v-col cols="12" md="6">
-                        <v-text-field v-model="form.tx_owner" label="Propietario" variant="outlined"></v-text-field>
-                    </v-col>
-                    <v-col cols="12" md="6">
-                        <v-text-field v-model="form.tx_owner_email" label="Email Propietario" variant="outlined"></v-text-field>
-                    </v-col>
-                    <v-col cols="12" md="6">
-                        <v-text-field v-model="form.tx_owner_phone" label="Teléfono" variant="outlined"></v-text-field>
-                    </v-col>
-                    <v-col cols="12">
-                        <v-text-field v-model="form.tx_address" label="Dirección" variant="outlined"></v-text-field>
-                    </v-col>
-                    <v-col cols="12" md="6">
-                        <v-text-field v-model="form.date_validity" type="date" label="Válido Hasta" variant="outlined"></v-text-field>
-                    </v-col>
-                    <v-col cols="12" md="6">
-                        <v-text-field v-model="form.admin_password" :label="isEditing ? 'Nueva Contraseña (Opcional)' : 'Contraseña del Admin'" variant="outlined"></v-text-field>
-                    </v-col>
-                    <v-col cols="12">
-                        <v-file-input
-                            v-model="form.tx_logo"
-                            accept="image/png, image/jpeg, image/jpg"
-                            label="Logo de la Empresa (Opcional)"
-                            variant="outlined"
-                            prepend-icon="mdi-camera"
-                            show-size
-                        ></v-file-input>
-                    </v-col>
-
-                    <!-- Selector de Módulos -->
-                    <v-col cols="12">
-                        <v-divider class="mb-3"></v-divider>
-                        <div class="text-subtitle-1 font-weight-bold mb-2">
-                            Módulos del Sistema
-                            <v-chip size="small" color="primary" class="ml-2">
-                                {{ selectedModules.length }} seleccionados
-                            </v-chip>
-                        </div>
-                        <div class="text-caption text-medium-emphasis mb-3">
-                            Selecciona los módulos a los que el cliente tendrá acceso
-                        </div>
-                        <v-progress-linear v-if="loadingModules" indeterminate color="primary" class="mb-3"></v-progress-linear>
-                        <div v-else-if="modules.length === 0" class="text-caption text-medium-emphasis">
-                            No hay módulos disponibles
-                        </div>
-                        <v-card v-else variant="outlined" class="pa-3">
-                            <div v-for="(groupItems, groupName) in groupedModules" :key="groupName" class="mb-2">
-                                <div class="d-flex align-center mb-1">
-                                    <v-switch
-                                        :model-value="isGroupSelected(groupItems)"
-                                        @update:model-value="toggleGroup(groupItems)"
-                                        :label="groupName"
-                                        density="compact"
-                                        hide-details
-                                        color="primary"
-                                        class="mt-0 pt-0"
-                                        style="flex: 1;"
-                                    ></v-switch>
-                                </div>
-                                <div class="d-flex flex-wrap ml-4">
-                                    <div v-for="mod in groupItems" :key="mod.id" class="mr-4 mb-1">
-                                        <v-checkbox
-                                            v-model="selectedModules"
-                                            :value="Number(mod.id)"
-                                            :label="mod.tx_name"
-                                            density="compact"
-                                            hide-details
-                                            color="primary"
-                                            class="mt-0 pt-0"
-                                        ></v-checkbox>
-                                    </div>
-                                </div>
-                            </div>
-                        </v-card>
-                    </v-col>
-                </v-row>
-            </v-card-text>
-            <v-card-actions>
-                <v-spacer></v-spacer>
-                <v-btn color="error" variant="text" @click="dialog = false">Cancelar</v-btn>
-                <v-btn color="primary" :loading="loading" @click="saveTenant">Guardar</v-btn>
-            </v-card-actions>
-        </v-card>
+        <v-card-actions class="pa-5 border-top">
+          <v-spacer></v-spacer>
+          <v-btn color="secondary" variant="text" rounded="lg" class="font-weight-bold px-4" @click="dialog = false">Cancelar</v-btn>
+          <v-btn color="primary" variant="flat" rounded="lg" class="font-weight-bold px-6" :loading="loading" @click="saveTenant">
+            {{ isEditing ? 'Guardar Cambios' : 'Crear Empresa' }}
+          </v-btn>
+        </v-card-actions>
+      </v-card>
     </v-dialog>
+  </v-container>
 </template>
+

@@ -4,40 +4,40 @@ export const DARK_THEME: ThemeTypes = {
   name: 'DARK_THEME',
   dark: true,
   variables: {
-    'border-color': '#fff'
+    'border-color': 'rgba(255, 255, 255, 0.12)'
   },
   colors: {
-    primary: '#2eced5',
-    info: '#eacc83',
+    primary: '#18B6C9',
+    secondary: '#0F766E',
+    info: '#3B82F6',
+    success: '#10B981',
+    warning: '#F59E0B',
+    error: '#EF4444',
+    indigo: '#818CF8',
 
-    secondary: '#fff',
-    success: '#43cc58ff',
-    warning: '#ffa726',
-    error: '#ef5350',
-    indigo: '#b39ddb',
+    lightprimary: 'rgba(24, 182, 201, 0.18)',
+    lightinfo: 'rgba(59, 130, 246, 0.18)',
+    lightsecondary: 'rgba(15, 118, 110, 0.18)',
+    lightsuccess: 'rgba(16, 185, 129, 0.18)',
+    lighterror: 'rgba(239, 68, 68, 0.18)',
+    lightwarning: 'rgba(245, 158, 11, 0.18)',
+    lightindigo: 'rgba(129, 140, 248, 0.18)',
 
-    lightprimary: '#1e2a38',
-    lightinfo: '#1c2b36',
-    lightsecondary: '#2c3e50',
-    lightsuccess: '#38795eff',
-    lighterror: '#3c1f1f',
-    lightwarning: '#3c2f1f',
-    lightindigo: '#2e2540',
+    textPrimary: '#F8FAFC',
+    textSecondary: '#94A3B8',
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    inputBorder: 'rgba(255, 255, 255, 0.18)',
+    containerBg: '#111A2E',
+    background: '#0B1120',
+    hoverColor: '#1E293B',
+    surface: '#111A2E',
 
-    textPrimary: '#e0e0e0',
-    textSecondary: '#b0bec5',
-    borderColor: '#fff',
-    inputBorder: '#3c4a5a',
-    containerBg: '#1e1e1e',
-    background: '#121212',
-    hoverColor: '#1f1f1f',
-    surface: '#1e1e1e',
-
-    grey100: '#fff',//'#b0bec5',
-    grey200: '#fff',
-    darkbg: '#fff',//'#121212',
-    bglight: '#fff',//'#1e1e1e',
-    bgdark: '#fff',//'#0d1117'
+    grey100: '#94A3B8',
+    grey200: '#F8FAFC',
+    darkbg: '#0B1120',
+    bglight: '#1E293B',
+    bgdark: '#070C18'
   }
 };
+
 

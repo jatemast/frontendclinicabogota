@@ -10,13 +10,13 @@ $white: #fff !default;
 // cards
 $card-title-size: 18px !default;
 
-$body-font-family: 'Plus Jakarta Sans' !default;
-$border-radius-root: 7px;
-$btn-font-weight: 400 !default;
+$body-font-family: 'Plus Jakarta Sans', 'Inter', sans-serif !default;
+$border-radius-root: 16px;
+$btn-font-weight: 500 !default;
 $btn-letter-spacing: 0 !default;
 
-// Global Shadow
-$box-shadow: 0 2px 6px rgba(37,83,185,.1) ;
+// Global Shadow LogicSurgi
+$box-shadow: 0 8px 25px rgba(0, 0, 0, 0.05);
 
 // Global Radius as per breakeven point
 // @forward 'vuetify/settings' with (
@@ -28,12 +28,12 @@ $box-shadow: 0 2px 6px rgba(37,83,185,.1) ;
 // );
 
 @forward 'vuetify/settings' with (
-    $color-pack: false !default,
+    $color-pack: false,
     // Global font size and border radius
     $font-size-root: 1rem,
     $border-radius-root: $border-radius-root,
     $body-font-family: $body-font-family,
-    $heading-font-family: $body-font-family !default,
+    $heading-font-family: $body-font-family,
     // 👉 Typography
     $typography:
         (
@@ -112,25 +112,23 @@ $box-shadow: 0 2px 6px rgba(37,83,185,.1) ;
                 'font-family': inherit,
                 'text-transform': uppercase
             )
-        )
-        !default,
+        ),
     // // 👉 Button
-    $button-border-radius: $border-radius-root !default,
-    $button-text-letter-spacing: 0 !default,
+    $button-border-radius: $border-radius-root,
+    $button-text-letter-spacing: 0,
     $button-text-transform: capitalize,
     $button-elevation: (
         'default': 0,
         'hover': 4,
         'active': 8
-    )
-    !default,
+    ),
 
     // // 👉 Tooltip
-    // $tooltip-background-color: #212121 !default,
-    // $tooltip-text-color: #fff !default,
-    // $tooltip-font-size: 0.75rem !default,
-    // $tooltip-border-radius: 4px !default,
-    // $tooltip-padding: 4px 8px !default,
+    // $tooltip-background-color: #212121,
+    // $tooltip-text-color: #fff,
+    // $tooltip-font-size: 0.75rem,
+    // $tooltip-border-radius: 4px,
+    // $tooltip-padding: 4px 8px,
 
     // // 👉 Rounded
     $rounded:
@@ -146,12 +144,12 @@ $box-shadow: 0 2px 6px rgba(37,83,185,.1) ;
         ),
 
     // // 👉 Card
-    // // $card-color: rgba(var(--v-theme-on-surface), var(--v-medium-emphasis-opacity)) !default,
-    $card-elevation: 10 !default,
-    $card-title-line-height: 1.6 !default,
-    $card-text-padding: 30px !default,
-    $card-item-padding: 20px 30px 30px !default,
-    $card-actions-padding: 10px 24px 24px !default,
-    $card-subtitle-opacity: 1 !default,
+    // // $card-color: rgba(var(--v-theme-on-surface), var(--v-medium-emphasis-opacity)),
+    $card-elevation: 10,
+    $card-title-line-height: 1.6,
+    $card-text-padding: 30px,
+    $card-item-padding: 20px 30px 30px,
+    $card-actions-padding: 10px 24px 24px,
+    $card-subtitle-opacity: 1,
     // $card-border-color	$border-color-root
 );

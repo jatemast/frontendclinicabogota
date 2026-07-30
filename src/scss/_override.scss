@@ -1,41 +1,195 @@
 html {
-    .bg-success,.bg-primary,.bg-secondary,.bg-warning,.bg-error,.bg-info,.bg-indigo{
+    .bg-success, .bg-primary, .bg-secondary, .bg-warning, .bg-error, .bg-info, .bg-indigo {
         color: white !important;
     }
-    .text-h1,.text-h2,.text-h3,.text-h4,.text-h5,.text-h6{
+    .text-h1, .text-h2, .text-h3, .text-h4, .text-h5, .text-h6 {
         color: rgb(var(--v-theme-grey200));
+        font-family: 'Plus Jakarta Sans', 'Inter', sans-serif !important;
     }
 }
 
-//Button Bg Shadow
-.v-btn--elevated{
-    &.bg-primary{
-        box-shadow: 0 4px 12px rgba(var(--v-theme-primary),0.3);
+body {
+    background-color: rgb(var(--v-theme-background)) !important;
+    font-family: 'Plus Jakarta Sans', 'Inter', sans-serif !important;
+    color: rgb(var(--v-theme-textPrimary)) !important;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* --- LogicSurgi Cards System --- */
+.v-card {
+    border-radius: 20px !important;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.05) !important;
+    border: 1px solid rgb(var(--v-theme-borderColor)) !important;
+    background-color: rgb(var(--v-theme-surface)) !important;
+    color: rgb(var(--v-theme-textPrimary)) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+
+    &.card-hover:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 14px 30px rgba(24, 182, 201, 0.15) !important;
+        border-color: rgba(24, 182, 201, 0.4) !important;
     }
 }
 
+/* --- LogicSurgi Buttons System --- */
+.v-btn {
+    border-radius: 16px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.2px !important;
+    text-transform: none !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+
+    &:hover {
+        transform: translateY(-1px);
+    }
+}
+
+.v-btn--elevated {
+    &.bg-primary {
+        box-shadow: 0 6px 18px rgba(24, 182, 201, 0.28) !important;
+
+        &:hover {
+            box-shadow: 0 8px 22px rgba(24, 182, 201, 0.38) !important;
+        }
+    }
+    &.bg-secondary {
+        box-shadow: 0 6px 18px rgba(15, 118, 110, 0.25) !important;
+    }
+}
+
+/* --- LogicSurgi Form Fields System --- */
+.v-field {
+    border-radius: 16px !important;
+    background-color: rgb(var(--v-theme-surface)) !important;
+    color: rgb(var(--v-theme-textPrimary)) !important;
+    transition: all 0.2s ease !important;
+
+    .v-field__outline {
+        --v-field-border-opacity: 1;
+        color: rgb(var(--v-theme-borderColor)) !important;
+    }
+
+    &.v-field--focused .v-field__outline {
+        color: #18B6C9 !important;
+        box-shadow: 0 0 0 3px rgba(24, 182, 201, 0.2) !important;
+    }
+}
+
+.v-input--density-comfortable {
+    --v-input-control-height: 48px;
+}
+
+/* --- LogicSurgi Tables System --- */
+.v-table {
+    background: transparent !important;
+    color: rgb(var(--v-theme-textPrimary)) !important;
+
+    .v-table__wrapper {
+        border-radius: 18px !important;
+        border: 1px solid rgb(var(--v-theme-borderColor)) !important;
+        background: rgb(var(--v-theme-surface)) !important;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.05) !important;
+
+        table {
+            thead > tr > th {
+                background-color: rgb(var(--v-theme-bglight)) !important;
+                color: rgb(var(--v-theme-textSecondary)) !important;
+                font-weight: 600 !important;
+                font-size: 0.85rem !important;
+                text-transform: uppercase !important;
+                letter-spacing: 0.5px !important;
+                border-bottom: 1px solid rgb(var(--v-theme-borderColor)) !important;
+                padding: 16px 20px !important;
+                height: 52px !important;
+            }
+
+            tbody > tr {
+                transition: background-color 0.2s ease;
+                
+                > td {
+                    font-size: 0.9rem !important;
+                    color: rgb(var(--v-theme-textPrimary)) !important;
+                    padding: 16px 20px !important;
+                    border-bottom: 1px solid rgb(var(--v-theme-borderColor)) !important;
+                    height: 56px !important;
+                }
+
+                &:hover > td {
+                    background-color: rgb(var(--v-theme-hoverColor)) !important;
+                }
+
+                &:last-child > td {
+                    border-bottom: none !important;
+                }
+            }
+        }
+    }
+}
+
+/* --- LogicSurgi Modals System --- */
+.v-dialog > .v-overlay__content > .v-card {
+    border-radius: 22px !important;
+    border: 1px solid rgb(var(--v-theme-borderColor)) !important;
+    background-color: rgb(var(--v-theme-surface)) !important;
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.25) !important;
+    padding: 8px !important;
+}
+
+.v-overlay__backdrop {
+    backdrop-filter: blur(8px) !important;
+    background-color: rgba(7, 12, 24, 0.6) !important;
+}
+
+/* --- LogicSurgi Badges & Chips --- */
+.v-chip {
+    border-radius: 9999px !important;
+    font-weight: 600 !important;
+    font-size: 0.78rem !important;
+    letter-spacing: 0.2px !important;
+    padding: 0 12px !important;
+}
+
+.v-badge__badge {
+    height: 18px;
+    min-width: 18px;
+    border-radius: 9999px;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+}
+
+/* --- Dividers & Borders --- */
 .border,
 .v-divider {
-    border-color: rgba(var(--v-border-color), 1) !important;
+    border-color: rgb(var(--v-theme-borderColor)) !important;
 }
-.v-divider{
-    opacity: 1;
+.v-divider {
+    opacity: 0.8;
 }
+
 .avtar-border {
     border: 2px solid rgb(var(--v-theme-surface)) !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
 }
-.subtext{
+
+.subtext {
     font-size: $font-size-root;
     line-height: 1.75rem;
+    color: rgb(var(--v-theme-textSecondary));
 }
+
 .border-right {
-    border-right: 1px solid rgba(var(--v-border-color), 1) !important;
+    border-right: 1px solid rgb(var(--v-theme-borderColor)) !important;
 }
-.color-inherit{
+
+.color-inherit {
     color: inherit;
 }
 
-.line-clamp{
+.line-clamp {
     overflow: hidden;
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -43,39 +197,64 @@ html {
     width: 100%;
     max-width: 200px;
 }
-.v-badge__badge{
-    height: 17px;
-    width: 17px;
-    font-size: 11px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-width: auto;
-    padding: 0;
+
+/* --- LogicSurgi Avatar Badge & Icon Contrast System --- */
+.v-avatar {
+    &.bg-lightprimary {
+        background-color: rgba(24, 182, 201, 0.18) !important;
+        .v-icon, svg {
+            color: #18B6C9 !important;
+            opacity: 1 !important;
+        }
+    }
+    &.bg-lightinfo {
+        background-color: rgba(59, 130, 246, 0.18) !important;
+        .v-icon, svg {
+            color: #3B82F6 !important;
+            opacity: 1 !important;
+        }
+    }
+    &.bg-lightsuccess {
+        background-color: rgba(16, 185, 129, 0.18) !important;
+        .v-icon, svg {
+            color: #10B981 !important;
+            opacity: 1 !important;
+        }
+    }
+    &.bg-lightwarning {
+        background-color: rgba(245, 158, 11, 0.18) !important;
+        .v-icon, svg {
+            color: #F59E0B !important;
+            opacity: 1 !important;
+        }
+    }
+    &.bg-lighterror {
+        background-color: rgba(239, 68, 68, 0.18) !important;
+        .v-icon, svg {
+            color: #EF4444 !important;
+            opacity: 1 !important;
+        }
+    }
+    &.bg-lightindigo {
+        background-color: rgba(129, 140, 248, 0.18) !important;
+        .v-icon, svg {
+            color: #818CF8 !important;
+            opacity: 1 !important;
+        }
+    }
 }
-.no-scrollbar{
+
+.no-scrollbar {
     height: calc(100vh - 315px);
 }
-.add-class .ps__thumb-x{
-    display: none !important;
-}
 
-
-.v-table>.v-table__wrapper>table>tbody>tr>th,
-.v-table>.v-table__wrapper>table>thead>tr>th,
-.v-table>.v-table__wrapper>table>tfoot>tr>th {
-    font-weight: 600;
-}
-.v-table .v-table__wrapper > table > thead > tr > th{
-    font-size: 16px;
-}
-
-.v-table .v-table__wrapper > table > tbody > tr > td{
-    font-size: 14px;
-}
-.h-100vh{
+.h-100vh {
     height: 100vh;
 }
-.gap-3{
-    gap:10px;
+
+.gap-3 {
+    gap: 12px;
 }
+
+
+

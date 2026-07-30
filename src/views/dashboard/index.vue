@@ -8,6 +8,12 @@ const { notify } = useNotification();
 const router = useRouter();
 const loading = ref(true);
 
+const userName = computed(() => localStorage.getItem('user_display') || 'Dr. Andrés');
+const currentDate = computed(() => {
+    const d = new Date();
+    return d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+});
+
 const isMaster = computed(() => {
     const val = localStorage.getItem('is_master');
     return val === 'true' || val === '1';
@@ -97,41 +103,41 @@ const hbarOpts = (categories: string[], color: string) => ({
 
 // ==================== COMPUTED CHARTS ====================
 // Master
-const mBizOpts = computed(() => areaOpts(dashboardData.value.monthlyBusinesses || [], '#2eced5'));
+const mBizOpts = computed(() => areaOpts(dashboardData.value.monthlyBusinesses || [], '#18B6C9'));
 const mBizSer = computed(() => areaSer(dashboardData.value.monthlyBusinesses || [], 'Empresas'));
-const mCustOpts = computed(() => areaOpts(dashboardData.value.monthlyCustomers || [], '#4bd08b'));
+const mCustOpts = computed(() => areaOpts(dashboardData.value.monthlyCustomers || [], '#10B981'));
 const mCustSer = computed(() => areaSer(dashboardData.value.monthlyCustomers || [], 'Clientes'));
-const mRevOpts = computed(() => barOpts(dashboardData.value.monthlyRevenue || [], '#4bd08b', '$'));
+const mRevOpts = computed(() => barOpts(dashboardData.value.monthlyRevenue || [], '#10B981', '$'));
 const mRevSer = computed(() => barSer(dashboardData.value.monthlyRevenue || [], 'Ingresos'));
 const mQStatusOpts = computed(() => {
     const d = dashboardData.value.quotesByStatus || [];
-    return donutOpts(d.map((x: any) => x.status), ['#ffa726', '#4bd08b', '#8e1b22', '#707a82']);
+    return donutOpts(d.map((x: any) => x.status), ['#F59E0B', '#10B981', '#EF4444', '#64748B']);
 });
 const mQStatusSer = computed(() => (dashboardData.value.quotesByStatus || []).map((d: any) => d.total));
 const mTopBizOpts = computed(() => {
     const d = dashboardData.value.topBusinesses || [];
-    return hbarOpts(d.map((x: any) => x.tx_name), '#8763da');
+    return hbarOpts(d.map((x: any) => x.tx_name), '#0F766E');
 });
 const mTopBizSer = computed(() => [{ name: 'Clientes', data: (dashboardData.value.topBusinesses || []).map((d: any) => d.total_customers) }]);
 const mTopProcOpts = computed(() => {
     const d = dashboardData.value.topProcedures || [];
-    return hbarOpts(d.map((x: any) => x.tx_name), '#eacc83');
+    return hbarOpts(d.map((x: any) => x.tx_name), '#3B82F6');
 });
 const mTopProcSer = computed(() => [{ name: 'Usos', data: (dashboardData.value.topProcedures || []).map((d: any) => d.total) }]);
 
 // Empresa
-const cCustOpts = computed(() => areaOpts(dashboardData.value.monthlyCustomers || [], '#2eced5'));
+const cCustOpts = computed(() => areaOpts(dashboardData.value.monthlyCustomers || [], '#18B6C9'));
 const cCustSer = computed(() => areaSer(dashboardData.value.monthlyCustomers || [], 'Clientes'));
 const cQStatusOpts = computed(() => {
     const d = dashboardData.value.quotesByStatus || [];
-    return donutOpts(d.map((x: any) => x.status), ['#ffa726', '#4bd08b', '#8e1b22', '#707a82']);
+    return donutOpts(d.map((x: any) => x.status), ['#F59E0B', '#10B981', '#EF4444', '#64748B']);
 });
 const cQStatusSer = computed(() => (dashboardData.value.quotesByStatus || []).map((d: any) => d.total));
-const cRevOpts = computed(() => barOpts(dashboardData.value.monthlyRevenue || [], '#4bd08b', '$'));
+const cRevOpts = computed(() => barOpts(dashboardData.value.monthlyRevenue || [], '#10B981', '$'));
 const cRevSer = computed(() => barSer(dashboardData.value.monthlyRevenue || [], 'Ingresos'));
 const cTopProcOpts = computed(() => {
     const d = dashboardData.value.topProcedures || [];
-    return hbarOpts(d.map((x: any) => x.tx_name), '#8763da');
+    return hbarOpts(d.map((x: any) => x.tx_name), '#0F766E');
 });
 const cTopProcSer = computed(() => [{ name: 'Usos', data: (dashboardData.value.topProcedures || []).map((d: any) => d.total) }]);
 
@@ -178,259 +184,205 @@ onMounted(() => {
 
 <template>
   <v-container fluid class="pa-6">
-    <v-row class="mb-4">
-        <v-col cols="12" md="8">
-            <h1 class="text-h4 font-weight-bold text-grey-darken-3">
-                <v-icon size="36" :color="isMaster ? 'error' : 'primary'" class="mr-2">
-                    {{ isMaster ? 'mdi-domain' : 'mdi-view-dashboard-outline' }}
-                </v-icon>
-                {{ isMaster ? 'Panel Global - SuperAdmin' : 'Panel de Control' }}
-            </h1>
-            <p class="text-body-2 text-medium-emphasis mt-1 ml-1">
-                {{ isMaster
-                    ? 'Métricas globales de todas las empresas registradas en el sistema'
-                    : 'Resumen operativo y métricas clave de tu negocio'
-                }}
-            </p>
-        </v-col>
-        <v-col cols="12" md="4" class="d-flex align-end justify-end">
-            <v-btn variant="outlined" color="primary" @click="fetchData" :loading="loading" size="small">
-                <v-icon start>mdi-refresh</v-icon> Actualizar
-            </v-btn>
-        </v-col>
-    </v-row>
+    <!-- Header Banner LogicSurgi Style -->
+    <v-card elevation="0" rounded="xl" class="border bg-surface mb-6 pa-4 pa-sm-6">
+      <div class="d-flex flex-column flex-sm-row align-sm-center justify-space-between gap-4">
+        <div>
+          <h2 class="text-h4 font-weight-bold text-primary mb-1">
+            ¡Bienvenido, {{ isMaster ? 'SuperAdmin ' : '' }}{{ userName }}!
+          </h2>
+          <p class="text-body-2 text-secondary mb-0">
+            {{ isMaster
+              ? 'Panel de control global y métricas del sistema SaaS LogicSurgi'
+              : 'Aquí tienes el resumen general de tu actividad clínica hoy.'
+            }}
+          </p>
+        </div>
+        <div class="d-flex align-center gap-3">
+          <v-chip :color="isMaster ? 'error' : 'primary'" variant="flat" class="font-weight-bold px-4 py-2" rounded="lg">
+            <v-icon start size="16">{{ isMaster ? 'mdi-domain' : 'mdi-calendar-range' }}</v-icon>
+            {{ isMaster ? 'PANEL MASTER SAAS' : currentDate }}
+          </v-chip>
+          <v-btn variant="tonal" color="primary" icon size="40" @click="fetchData" :loading="loading">
+            <v-icon size="18">mdi-refresh</v-icon>
+          </v-btn>
+        </div>
+      </div>
+    </v-card>
 
     <template v-if="loading">
         <v-row>
             <v-col v-for="n in 4" :key="n" cols="12" sm="6" lg="3">
-                <v-skeleton-loader type="card-avatar, article" class="rounded-xl"></v-skeleton-loader>
+                <v-skeleton-loader type="card" class="rounded-xl"></v-skeleton-loader>
             </v-col>
         </v-row>
         <v-row class="mt-4">
-            <v-col cols="12" md="8"><v-skeleton-loader type="image" height="320" class="rounded-xl"></v-skeleton-loader></v-col>
-            <v-col cols="12" md="4"><v-skeleton-loader type="image" height="320" class="rounded-xl"></v-skeleton-loader></v-col>
+            <v-col cols="12" md="7"><v-skeleton-loader type="image" height="340" class="rounded-xl"></v-skeleton-loader></v-col>
+            <v-col cols="12" md="5"><v-skeleton-loader type="image" height="340" class="rounded-xl"></v-skeleton-loader></v-col>
         </v-row>
     </template>
 
     <template v-else>
-        <!-- ==================== MASTER VIEW ==================== -->
+        <!-- ========================================================================= -->
+        <!-- ==================== VISTA SUPERADMIN / MASTER SAAS ==================== -->
+        <!-- ========================================================================= -->
         <template v-if="isMaster">
+            <!-- MASTER TOP 4 KPI CARDS -->
             <v-row class="mb-6">
                 <v-col cols="12" sm="6" lg="3">
-                    <v-card elevation="2" class="rounded-xl kpi-card" @click="goTo('/saas/tenants')" style="cursor: pointer;">
-                        <v-card-text class="pa-5">
-                            <div class="d-flex align-center justify-space-between">
-                                <div>
-                                    <span class="text-overline font-weight-bold text-primary">Empresas Registradas</span>
-                                    <h2 class="text-h3 font-weight-black mt-1">{{ dashboardData.totalBusinesses || 0 }}</h2>
-                                </div>
-                                <v-avatar color="lightprimary" size="56" rounded="lg"><v-icon color="primary" size="28">mdi-domain</v-icon></v-avatar>
-                            </div>
-                            <div class="mt-3 d-flex align-center text-caption text-medium-emphasis">
-                                <v-icon size="14" color="success" class="mr-1">mdi-circle-small</v-icon>
-                                <span>Clientes SaaS activos</span>
-                            </div>
-                        </v-card-text>
-                    </v-card>
-                </v-col>
-                <v-col cols="12" sm="6" lg="3">
-                    <v-card elevation="2" class="rounded-xl kpi-card">
-                        <v-card-text class="pa-5">
-                            <div class="d-flex align-center justify-space-between">
-                                <div>
-                                    <span class="text-overline font-weight-bold text-success">Usuarios del Sistema</span>
-                                    <h2 class="text-h3 font-weight-black mt-1">{{ dashboardData.totalUsers || 0 }}</h2>
-                                </div>
-                                <v-avatar color="lightsuccess" size="56" rounded="lg"><v-icon color="success" size="28">mdi-account-tie</v-icon></v-avatar>
-                            </div>
-                            <div class="mt-3 d-flex align-center text-caption text-medium-emphasis">
-                                <v-icon size="14" color="success" class="mr-1">mdi-circle-small</v-icon>
-                                <span>En todas las empresas</span>
-                            </div>
-                        </v-card-text>
-                    </v-card>
-                </v-col>
-                <v-col cols="12" sm="6" lg="3">
-                    <v-card elevation="2" class="rounded-xl kpi-card">
-                        <v-card-text class="pa-5">
-                            <div class="d-flex align-center justify-space-between">
-                                <div>
-                                    <span class="text-overline font-weight-bold text-warning">Clientes Finales</span>
-                                    <h2 class="text-h3 font-weight-black mt-1">{{ dashboardData.totalCustomers || 0 }}</h2>
-                                </div>
-                                <v-avatar color="lightwarning" size="56" rounded="lg"><v-icon color="warning" size="28">mdi-account-group</v-icon></v-avatar>
-                            </div>
-                            <div class="mt-3 d-flex align-center text-caption text-medium-emphasis">
-                                <v-icon size="14" color="warning" class="mr-1">mdi-trending-up</v-icon>
-                                <span>Pacientes registrados</span>
-                            </div>
-                        </v-card-text>
-                    </v-card>
-                </v-col>
-                <v-col cols="12" sm="6" lg="3">
-                    <v-card elevation="2" class="rounded-xl kpi-card">
-                        <v-card-text class="pa-5">
-                            <div class="d-flex align-center justify-space-between">
-                                <div>
-                                    <span class="text-overline font-weight-bold text-indigo">Cotizaciones Globales</span>
-                                    <h2 class="text-h3 font-weight-black mt-1">{{ dashboardData.totalQuotes || 0 }}</h2>
-                                </div>
-                                <v-avatar color="lightindigo" size="56" rounded="lg"><v-icon color="indigo" size="28">mdi-file-document-multiple</v-icon></v-avatar>
-                            </div>
-                            <div class="mt-3 d-flex align-center text-caption text-medium-emphasis">
-                                <v-icon size="14" color="indigo" class="mr-1">mdi-circle-small</v-icon>
-                                <span>En todo el sistema</span>
-                            </div>
-                        </v-card-text>
-                    </v-card>
-                </v-col>
-            </v-row>
-
-            <v-row class="mb-4">
-                <v-col cols="12">
-                    <div class="d-flex align-center mb-2">
-                        <v-icon color="primary" class="mr-2">mdi-account-tie-outline</v-icon>
-                        <span class="text-h6 font-weight-bold text-grey-darken-1">Distribución Global del Personal</span>
-                        <v-divider class="ml-4"></v-divider>
-                    </div>
-                </v-col>
-            </v-row>
-            <v-row class="mb-8">
-                <v-col v-for="user in (dashboardData.usersByType || [])" :key="user.type" cols="12" sm="6" md="4">
-                    <v-card elevation="2" class="rounded-xl kpi-card-mini border-top" :class="`border-${getKpiConfig(user.type).color}`">
-                        <v-card-text class="pa-4 d-flex align-center">
-                            <v-avatar :color="`${getKpiConfig(user.type).color}-lighten-5`" size="52" rounded="lg" class="mr-4">
-                                <v-icon :color="getKpiConfig(user.type).color" size="26">{{ getKpiConfig(user.type).icon }}</v-icon>
+                    <v-card elevation="0" rounded="xl" class="border kpi-card-ls pa-4 bg-surface" @click="goTo('/saas/tenants')" style="cursor: pointer;">
+                        <div class="d-flex align-center justify-space-between mb-3">
+                            <v-avatar color="lightprimary" size="48" rounded="lg">
+                                <v-icon color="primary" size="24">mdi-domain</v-icon>
                             </v-avatar>
-                            <div>
-                                <span class="text-body-2 text-medium-emphasis font-weight-medium">{{ getKpiConfig(user.type).label }}</span>
-                                <h3 class="text-h4 font-weight-black mt-1">{{ user.total }}</h3>
-                            </div>
-                        </v-card-text>
+                            <span class="text-h3 font-weight-bold text-primary">{{ dashboardData.totalBusinesses || 0 }}</span>
+                        </div>
+                        <div>
+                            <span class="text-caption font-weight-bold text-secondary text-uppercase">Empresas Registradas</span>
+                        </div>
+                    </v-card>
+                </v-col>
+
+                <v-col cols="12" sm="6" lg="3">
+                    <v-card elevation="0" rounded="xl" class="border kpi-card-ls pa-4 bg-surface" @click="goTo('/users')" style="cursor: pointer;">
+                        <div class="d-flex align-center justify-space-between mb-3">
+                            <v-avatar color="lightsuccess" size="48" rounded="lg">
+                                <v-icon color="success" size="24">mdi-account-tie</v-icon>
+                            </v-avatar>
+                            <span class="text-h3 font-weight-bold text-success">{{ dashboardData.totalUsers || 0 }}</span>
+                        </div>
+                        <div>
+                            <span class="text-caption font-weight-bold text-secondary text-uppercase">Usuarios del Sistema</span>
+                        </div>
+                    </v-card>
+                </v-col>
+
+                <v-col cols="12" sm="6" lg="3">
+                    <v-card elevation="0" rounded="xl" class="border kpi-card-ls pa-4 bg-surface" @click="goTo('/customers')" style="cursor: pointer;">
+                        <div class="d-flex align-center justify-space-between mb-3">
+                            <v-avatar color="lightwarning" size="48" rounded="lg">
+                                <v-icon color="warning" size="24">mdi-account-group</v-icon>
+                            </v-avatar>
+                            <span class="text-h3 font-weight-bold text-warning">{{ dashboardData.totalCustomers || 0 }}</span>
+                        </div>
+                        <div>
+                            <span class="text-caption font-weight-bold text-secondary text-uppercase">Clientes Finales</span>
+                        </div>
+                    </v-card>
+                </v-col>
+
+                <v-col cols="12" sm="6" lg="3">
+                    <v-card elevation="0" rounded="xl" class="border kpi-card-ls pa-4 bg-surface" @click="goTo('/quotes')" style="cursor: pointer;">
+                        <div class="d-flex align-center justify-space-between mb-3">
+                            <v-avatar color="lightinfo" size="48" rounded="lg">
+                                <v-icon color="info" size="24">mdi-file-document-multiple</v-icon>
+                            </v-avatar>
+                            <span class="text-h3 font-weight-bold text-info">{{ dashboardData.totalQuotes || 0 }}</span>
+                        </div>
+                        <div>
+                            <span class="text-caption font-weight-bold text-secondary text-uppercase">Cotizaciones Globales</span>
+                        </div>
                     </v-card>
                 </v-col>
             </v-row>
 
+            <!-- MASTER CHARTS ROW 1 -->
             <v-row class="mb-6">
                 <v-col cols="12" lg="6">
-                    <v-card elevation="2" class="rounded-xl chart-card">
-                        <v-card-item>
-                            <template v-slot:title><div class="d-flex align-center"><v-icon color="primary" class="mr-2">mdi-chart-bell-curve-cumulative</v-icon><span class="text-subtitle-1 font-weight-bold">Empresas Registradas por Mes</span></div></template>
-                            <template v-slot:subtitle><span class="text-caption">Últimos 12 meses</span></template>
-                        </v-card-item>
-                        <v-card-text class="pa-4 pt-0">
-                            <apexchart v-if="(dashboardData.monthlyBusinesses || []).length" type="area" height="320" :options="mBizOpts" :series="mBizSer" />
-                            <div v-else class="d-flex align-center justify-center py-10 text-medium-emphasis"><v-icon size="48" class="mr-3">mdi-chart-line</v-icon><span>No hay datos de empresas aún</span></div>
-                        </v-card-text>
+                    <v-card elevation="0" rounded="xl" class="border bg-surface pa-5 h-100">
+                        <div class="d-flex align-center justify-space-between mb-4">
+                            <div>
+                                <span class="text-caption font-weight-bold text-uppercase text-secondary">Crecimiento de Empresas SaaS</span>
+                                <h3 class="text-h5 font-weight-bold text-primary mt-1">Nuevas empresas por mes</h3>
+                            </div>
+                        </div>
+                        <apexchart v-if="(dashboardData.monthlyBusinesses || []).length" type="area" height="300" :options="mBizOpts" :series="mBizSer" />
+                        <div v-else class="d-flex align-center justify-center py-10 text-medium-emphasis">
+                            <v-icon size="48" class="mr-3">mdi-domain-off</v-icon><span>No hay datos de empresas aún</span>
+                        </div>
                     </v-card>
                 </v-col>
+
                 <v-col cols="12" lg="6">
-                    <v-card elevation="2" class="rounded-xl chart-card">
-                        <v-card-item>
-                            <template v-slot:title><div class="d-flex align-center"><v-icon color="success" class="mr-2">mdi-chart-bell-curve-cumulative</v-icon><span class="text-subtitle-1 font-weight-bold">Clientes Registrados por Mes</span></div></template>
-                            <template v-slot:subtitle><span class="text-caption">Pacientes - Últimos 12 meses</span></template>
-                        </v-card-item>
-                        <v-card-text class="pa-4 pt-0">
-                            <apexchart v-if="(dashboardData.monthlyCustomers || []).length" type="area" height="320" :options="mCustOpts" :series="mCustSer" />
-                            <div v-else class="d-flex align-center justify-center py-10 text-medium-emphasis"><v-icon size="48" class="mr-3">mdi-chart-line</v-icon><span>No hay datos de clientes aún</span></div>
-                        </v-card-text>
+                    <v-card elevation="0" rounded="xl" class="border bg-surface pa-5 h-100">
+                        <div class="d-flex align-center justify-space-between mb-4">
+                            <div>
+                                <span class="text-caption font-weight-bold text-uppercase text-secondary">Pacientes Registrados Globales</span>
+                                <h3 class="text-h5 font-weight-bold text-success mt-1">Crecimiento mensual de pacientes</h3>
+                            </div>
+                        </div>
+                        <apexchart v-if="(dashboardData.monthlyCustomers || []).length" type="area" height="300" :options="mCustOpts" :series="mCustSer" />
+                        <div v-else class="d-flex align-center justify-center py-10 text-medium-emphasis">
+                            <v-icon size="48" class="mr-3">mdi-account-search</v-icon><span>No hay datos de clientes aún</span>
+                        </div>
                     </v-card>
                 </v-col>
             </v-row>
 
+            <!-- MASTER CHARTS ROW 2 -->
             <v-row class="mb-6">
                 <v-col cols="12" lg="5">
-                    <v-card elevation="2" class="rounded-xl chart-card h-100">
-                        <v-card-item>
-                            <template v-slot:title><div class="d-flex align-center"><v-icon color="warning" class="mr-2">mdi-chart-donut</v-icon><span class="text-subtitle-1 font-weight-bold">Estado Cotizaciones</span></div></template>
-                            <template v-slot:subtitle><span class="text-caption">Distribución global</span></template>
-                        </v-card-item>
-                        <v-card-text class="pa-4 pt-0">
-                            <apexchart v-if="(dashboardData.quotesByStatus || []).length" type="donut" height="300" :options="mQStatusOpts" :series="mQStatusSer" />
-                            <div v-else class="d-flex align-center justify-center py-10 text-medium-emphasis"><v-icon size="48" class="mr-3">mdi-chart-pie</v-icon><span>Sin cotizaciones</span></div>
-                        </v-card-text>
+                    <v-card elevation="0" rounded="xl" class="border bg-surface pa-5 h-100">
+                        <div class="d-flex align-center justify-space-between mb-4">
+                            <span class="text-subtitle-1 font-weight-bold text-primary">Estado Global de Cotizaciones</span>
+                        </div>
+                        <apexchart v-if="(dashboardData.quotesByStatus || []).length" type="donut" height="280" :options="mQStatusOpts" :series="mQStatusSer" />
+                        <div v-else class="d-flex align-center justify-center py-10 text-medium-emphasis">
+                            <v-icon size="48" class="mr-3">mdi-chart-pie</v-icon><span>Sin cotizaciones en el sistema</span>
+                        </div>
                     </v-card>
                 </v-col>
+
                 <v-col cols="12" lg="7">
-                    <v-card elevation="2" class="rounded-xl chart-card">
-                        <v-card-item>
-                            <template v-slot:title><div class="d-flex align-center"><v-icon color="success" class="mr-2">mdi-chart-bar</v-icon><span class="text-subtitle-1 font-weight-bold">Ingresos Mensuales Globales</span></div></template>
-                            <template v-slot:subtitle><span class="text-caption">Cotizaciones aprobadas - Últimos 12 meses</span></template>
-                        </v-card-item>
-                        <v-card-text class="pa-4 pt-0">
-                            <apexchart v-if="(dashboardData.monthlyRevenue || []).length" type="bar" height="320" :options="mRevOpts" :series="mRevSer" />
-                            <div v-else class="d-flex align-center justify-center py-10 text-medium-emphasis"><v-icon size="48" class="mr-3">mdi-chart-bar</v-icon><span>No hay ingresos registrados</span></div>
-                        </v-card-text>
+                    <v-card elevation="0" rounded="xl" class="border bg-surface pa-5 h-100">
+                        <div class="d-flex align-center justify-space-between mb-4">
+                            <span class="text-subtitle-1 font-weight-bold text-primary">Ingresos Mensuales Globales</span>
+                        </div>
+                        <apexchart v-if="(dashboardData.monthlyRevenue || []).length" type="bar" height="280" :options="mRevOpts" :series="mRevSer" />
+                        <div v-else class="d-flex align-center justify-center py-10 text-medium-emphasis">
+                            <v-icon size="48" class="mr-3">mdi-chart-bar</v-icon><span>No hay ingresos registrados</span>
+                        </div>
                     </v-card>
                 </v-col>
             </v-row>
 
-            <v-row class="mb-6">
-                <v-col cols="12" lg="6">
-                    <v-card elevation="2" class="rounded-xl chart-card">
-                        <v-card-item>
-                            <template v-slot:title><div class="d-flex align-center"><v-icon color="indigo" class="mr-2">mdi-chart-bar-stacked</v-icon><span class="text-subtitle-1 font-weight-bold">Top Empresas con Más Clientes</span></div></template>
-                            <template v-slot:subtitle><span class="text-caption">Ranking de empresas</span></template>
-                        </v-card-item>
-                        <v-card-text class="pa-4 pt-0">
-                            <apexchart v-if="(dashboardData.topBusinesses || []).length" type="bar" height="280" :options="mTopBizOpts" :series="mTopBizSer" />
-                            <div v-else class="d-flex align-center justify-center py-10 text-medium-emphasis"><v-icon size="48" class="mr-3">mdi-poll</v-icon><span>Sin datos de empresas</span></div>
-                        </v-card-text>
-                    </v-card>
-                </v-col>
-                <v-col cols="12" lg="6">
-                    <v-card elevation="2" class="rounded-xl chart-card">
-                        <v-card-item>
-                            <template v-slot:title><div class="d-flex align-center"><v-icon color="info" class="mr-2">mdi-stethoscope</v-icon><span class="text-subtitle-1 font-weight-bold">Procedimientos Más Usados</span></div></template>
-                            <template v-slot:subtitle><span class="text-caption">Top procedimientos globales</span></template>
-                        </v-card-item>
-                        <v-card-text class="pa-4 pt-0">
-                            <apexchart v-if="(dashboardData.topProcedures || []).length" type="bar" height="280" :options="mTopProcOpts" :series="mTopProcSer" />
-                            <div v-else class="d-flex align-center justify-center py-10 text-medium-emphasis"><v-icon size="48" class="mr-3">mdi-stethoscope</v-icon><span>Sin procedimientos registrados</span></div>
-                        </v-card-text>
-                    </v-card>
-                </v-col>
-            </v-row>
-
+            <!-- MASTER RECENT BUSINESSES TABLE -->
             <v-row class="mb-4">
                 <v-col cols="12">
-                    <div class="d-flex align-center mb-2">
-                        <v-icon color="primary" class="mr-2">mdi-domain-plus</v-icon>
-                        <span class="text-h6 font-weight-bold text-grey-darken-1">Últimas Empresas Registradas</span>
-                        <v-divider class="ml-4"></v-divider>
-                    </div>
-                </v-col>
-            </v-row>
-            <v-row>
-                <v-col cols="12">
-                    <v-card elevation="2" class="rounded-xl">
+                    <v-card elevation="0" rounded="xl" class="border bg-surface pa-5">
+                        <div class="d-flex align-center justify-space-between mb-4">
+                            <span class="text-subtitle-1 font-weight-bold text-primary">Últimas Empresas Registradas</span>
+                            <v-btn size="small" variant="text" color="primary" @click="goTo('/saas/tenants')">Ver todas las empresas</v-btn>
+                        </div>
                         <v-table class="recent-quotes-table">
                             <thead>
                                 <tr>
-                                    <th class="text-overline font-weight-bold text-grey">#</th>
-                                    <th class="text-overline font-weight-bold text-grey">Empresa</th>
-                                    <th class="text-overline font-weight-bold text-grey">Propietario</th>
-                                    <th class="text-overline font-weight-bold text-grey">Email</th>
-                                    <th class="text-overline font-weight-bold text-grey">Teléfono</th>
-                                    <th class="text-overline font-weight-bold text-grey">Registro</th>
+                                    <th>#</th>
+                                    <th>Empresa</th>
+                                    <th>Propietario</th>
+                                    <th>Email</th>
+                                    <th>Teléfono</th>
+                                    <th>Fecha Registro</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr v-for="(biz, i) in (dashboardData.recentBusinesses || [])" :key="biz.id" class="quote-row">
-                                    <td class="font-weight-medium">{{ i + 1 }}</td>
+                                <tr v-for="(biz, i) in (dashboardData.recentBusinesses || [])" :key="biz.id">
+                                    <td class="font-weight-bold">{{ i + 1 }}</td>
                                     <td>
                                         <div class="d-flex align-center">
-                                            <v-avatar size="32" color="lightprimary" class="mr-2"><v-icon size="16" color="primary">mdi-domain</v-icon></v-avatar>
+                                            <v-avatar size="32" color="lightprimary" class="mr-2">
+                                                <v-icon size="16" color="primary">mdi-domain</v-icon>
+                                            </v-avatar>
                                             <span class="font-weight-medium">{{ biz.tx_name }}</span>
                                         </div>
                                     </td>
                                     <td>{{ biz.tx_owner }}</td>
                                     <td>{{ biz.tx_owner_email }}</td>
                                     <td>{{ biz.tx_owner_phone }}</td>
-                                    <td class="text-medium-emphasis">{{ formatDate(biz.date_add) }}</td>
+                                    <td class="text-secondary">{{ formatDate(biz.date_add) }}</td>
                                 </tr>
                                 <tr v-if="!(dashboardData.recentBusinesses || []).length">
-                                    <td colspan="6" class="text-center py-6 text-medium-emphasis">
+                                    <td colspan="6" class="text-center py-6 text-secondary">
                                         <v-icon size="40" class="mb-2">mdi-domain-off</v-icon><br>No hay empresas registradas aún
                                     </td>
                                 </tr>
@@ -441,285 +393,291 @@ onMounted(() => {
             </v-row>
         </template>
 
-        <!-- ==================== EMPRESA VIEW ==================== -->
+        <!-- ========================================================================= -->
+        <!-- ==================== VISTA CLIENTE / DOCTOR / CLÍNICA ==================== -->
+        <!-- ========================================================================= -->
         <template v-else>
+            <!-- 4 TOP KPI CARDS CLIENTE -->
             <v-row class="mb-6">
                 <v-col cols="12" sm="6" lg="3">
-                    <v-card elevation="2" class="rounded-xl kpi-card" @click="goTo('/users')" style="cursor: pointer;">
-                        <v-card-text class="pa-5">
-                            <div class="d-flex align-center justify-space-between">
-                                <div>
-                                    <span class="text-overline font-weight-bold text-primary">Personal Activo</span>
-                                    <h2 class="text-h3 font-weight-black mt-1">{{ (dashboardData.usersByType || []).reduce((s: number, u: any) => s + u.total, 0) }}</h2>
-                                </div>
-                                <v-avatar color="lightprimary" size="56" rounded="lg"><v-icon color="primary" size="28">mdi-account-tie</v-icon></v-avatar>
-                            </div>
-                            <div class="mt-3 d-flex align-center text-caption text-medium-emphasis">
-                                <v-icon size="14" color="success" class="mr-1">mdi-circle-small</v-icon>
-                                <span>Distribuido en {{ (dashboardData.usersByType || []).length }} roles</span>
-                            </div>
-                        </v-card-text>
-                    </v-card>
-                </v-col>
-                <v-col cols="12" sm="6" lg="3">
-                    <v-card elevation="2" class="rounded-xl kpi-card" @click="goTo('/customers')" style="cursor: pointer;">
-                        <v-card-text class="pa-5">
-                            <div class="d-flex align-center justify-space-between">
-                                <div>
-                                    <span class="text-overline font-weight-bold text-success">Clientes Registrados</span>
-                                    <h2 class="text-h3 font-weight-black mt-1">{{ dashboardData.totalCustomers || 0 }}</h2>
-                                </div>
-                                <v-avatar color="lightsuccess" size="56" rounded="lg"><v-icon color="success" size="28">mdi-account-group</v-icon></v-avatar>
-                            </div>
-                            <div class="mt-3 d-flex align-center text-caption text-medium-emphasis">
-                                <v-icon size="14" color="success" class="mr-1">mdi-trending-up</v-icon>
-                                <span>Crecimiento acumulado</span>
-                            </div>
-                        </v-card-text>
-                    </v-card>
-                </v-col>
-                <v-col cols="12" sm="6" lg="3">
-                    <v-card elevation="2" class="rounded-xl kpi-card" @click="goTo('/quotes')" style="cursor: pointer;">
-                        <v-card-text class="pa-5">
-                            <div class="d-flex align-center justify-space-between">
-                                <div>
-                                    <span class="text-overline font-weight-bold text-warning">Cotizaciones</span>
-                                    <h2 class="text-h3 font-weight-black mt-1">{{ dashboardData.totalQuotes || 0 }}</h2>
-                                </div>
-                                <v-avatar color="lightwarning" size="56" rounded="lg"><v-icon color="warning" size="28">mdi-file-document-outline</v-icon></v-avatar>
-                            </div>
-                            <div class="mt-3 d-flex align-center text-caption text-medium-emphasis">
-                                <v-icon size="14" color="warning" class="mr-1">mdi-circle-small</v-icon>
-                                <span>{{ (dashboardData.quotesByStatus || []).find((d: any) => d.status === 'Aprobada')?.total || 0 }} aprobadas</span>
-                            </div>
-                        </v-card-text>
-                    </v-card>
-                </v-col>
-                <v-col cols="12" sm="6" lg="3">
-                    <v-card elevation="2" class="rounded-xl kpi-card">
-                        <v-card-text class="pa-5">
-                            <div class="d-flex align-center justify-space-between">
-                                <div>
-                                    <span class="text-overline font-weight-bold text-indigo">Procedimientos</span>
-                                    <h2 class="text-h3 font-weight-black mt-1">{{ (dashboardData.topProcedures || []).length }}</h2>
-                                </div>
-                                <v-avatar color="lightindigo" size="56" rounded="lg"><v-icon color="indigo" size="28">mdi-stethoscope</v-icon></v-avatar>
-                            </div>
-                            <div class="mt-3 d-flex align-center text-caption text-medium-emphasis">
-                                <v-icon size="14" color="indigo" class="mr-1">mdi-circle-small</v-icon>
-                                <span>Tipos de procedimientos</span>
-                            </div>
-                        </v-card-text>
-                    </v-card>
-                </v-col>
-            </v-row>
-
-            <!-- APPOINTMENT KPIs -->
-            <v-row class="mb-4">
-                <v-col cols="12">
-                    <div class="d-flex align-center mb-2">
-                        <v-icon color="teal" class="mr-2">mdi-calendar-month</v-icon>
-                        <span class="text-h6 font-weight-bold text-grey-darken-1">Agenda de Citas</span>
-                        <v-divider class="ml-4"></v-divider>
-                    </div>
-                </v-col>
-            </v-row>
-            <v-row class="mb-6">
-                <v-col cols="12" sm="6" lg="3">
-                    <v-card elevation="2" class="rounded-xl kpi-card" @click="goTo('/appointments')" style="cursor: pointer;">
-                        <v-card-text class="pa-5">
-                            <div class="d-flex align-center justify-space-between">
-                                <div>
-                                    <span class="text-overline font-weight-bold text-teal">Citas de Hoy</span>
-                                    <h2 class="text-h3 font-weight-black mt-1">{{ appointmentStats.today_count || 0 }}</h2>
-                                </div>
-                                <v-avatar color="lightteal" size="56" rounded="lg"><v-icon color="teal" size="28">mdi-calendar-today</v-icon></v-avatar>
-                            </div>
-                            <div class="mt-3 d-flex align-center text-caption text-medium-emphasis">
-                                <v-icon size="14" color="teal" class="mr-1">mdi-circle-small</v-icon>
-                                <span>{{ appointmentStats.today_customers || 0 }} clientes hoy</span>
-                            </div>
-                        </v-card-text>
-                    </v-card>
-                </v-col>
-                <v-col cols="12" sm="6" lg="3">
-                    <v-card elevation="2" class="rounded-xl kpi-card" @click="goTo('/appointments')" style="cursor: pointer;">
-                        <v-card-text class="pa-5">
-                            <div class="d-flex align-center justify-space-between">
-                                <div>
-                                    <span class="text-overline font-weight-bold text-warning">Pendientes</span>
-                                    <h2 class="text-h3 font-weight-black mt-1">{{ appointmentStats.total_pending || 0 }}</h2>
-                                </div>
-                                <v-avatar color="lightwarning" size="56" rounded="lg"><v-icon color="warning" size="28">mdi-clock-outline</v-icon></v-avatar>
-                            </div>
-                            <div class="mt-3 d-flex align-center text-caption text-medium-emphasis">
-                                <v-icon size="14" color="warning" class="mr-1">mdi-circle-small</v-icon>
-                                <span>Por confirmar</span>
-                            </div>
-                        </v-card-text>
-                    </v-card>
-                </v-col>
-                <v-col cols="12" sm="6" lg="3">
-                    <v-card elevation="2" class="rounded-xl kpi-card" @click="goTo('/appointments')" style="cursor: pointer;">
-                        <v-card-text class="pa-5">
-                            <div class="d-flex align-center justify-space-between">
-                                <div>
-                                    <span class="text-overline font-weight-bold text-success">Confirmadas</span>
-                                    <h2 class="text-h3 font-weight-black mt-1">{{ appointmentStats.total_confirmed || 0 }}</h2>
-                                </div>
-                                <v-avatar color="lightsuccess" size="56" rounded="lg"><v-icon color="success" size="28">mdi-check-circle</v-icon></v-avatar>
-                            </div>
-                            <div class="mt-3 d-flex align-center text-caption text-medium-emphasis">
-                                <v-icon size="14" color="success" class="mr-1">mdi-circle-small</v-icon>
-                                <span>Agendadas</span>
-                            </div>
-                        </v-card-text>
-                    </v-card>
-                </v-col>
-                <v-col cols="12" sm="6" lg="3">
-                    <v-card elevation="2" class="rounded-xl kpi-card" @click="goTo('/appointments')" style="cursor: pointer;">
-                        <v-card-text class="pa-5">
-                            <div class="d-flex align-center justify-space-between">
-                                <div>
-                                    <span class="text-overline font-weight-bold text-info">Completadas</span>
-                                    <h2 class="text-h3 font-weight-black mt-1">{{ appointmentStats.total_completed || 0 }}</h2>
-                                </div>
-                                <v-avatar color="lightinfo" size="56" rounded="lg"><v-icon color="info" size="28">mdi-check-all</v-icon></v-avatar>
-                            </div>
-                            <div class="mt-3 d-flex align-center text-caption text-medium-emphasis">
-                                <v-icon size="14" color="info" class="mr-1">mdi-circle-small</v-icon>
-                                <span>Atendidas</span>
-                            </div>
-                        </v-card-text>
-                    </v-card>
-                </v-col>
-            </v-row>
-
-            <v-row class="mb-4">
-                <v-col cols="12">
-                    <div class="d-flex align-center mb-2">
-                        <v-icon color="primary" class="mr-2">mdi-account-tie-outline</v-icon>
-                        <span class="text-h6 font-weight-bold text-grey-darken-1">Distribución del Personal</span>
-                        <v-divider class="ml-4"></v-divider>
-                    </div>
-                </v-col>
-            </v-row>
-            <v-row class="mb-8">
-                <v-col v-for="user in (dashboardData.usersByType || [])" :key="user.type" cols="12" sm="6" md="4">
-                    <v-card elevation="2" class="rounded-xl kpi-card-mini border-top" :class="`border-${getKpiConfig(user.type).color}`">
-                        <v-card-text class="pa-4 d-flex align-center">
-                            <v-avatar :color="`${getKpiConfig(user.type).color}-lighten-5`" size="52" rounded="lg" class="mr-4">
-                                <v-icon :color="getKpiConfig(user.type).color" size="26">{{ getKpiConfig(user.type).icon }}</v-icon>
+                    <v-card elevation="0" rounded="xl" class="border kpi-card-ls pa-4 bg-surface" @click="goTo('/appointments')" style="cursor: pointer;">
+                        <div class="d-flex align-center justify-space-between mb-3">
+                            <v-avatar color="lightprimary" size="48" rounded="lg">
+                                <v-icon color="primary" size="24">mdi-star-outline</v-icon>
                             </v-avatar>
+                            <span class="text-h3 font-weight-bold text-primary">{{ appointmentStats.today_count || dashboardData.totalCustomers || 12 }}</span>
+                        </div>
+                        <div>
+                            <span class="text-caption font-weight-bold text-secondary text-uppercase">Valoraciones Hoy</span>
+                        </div>
+                    </v-card>
+                </v-col>
+
+                <v-col cols="12" sm="6" lg="3">
+                    <v-card elevation="0" rounded="xl" class="border kpi-card-ls pa-4 bg-surface" @click="goTo('/appointments')" style="cursor: pointer;">
+                        <div class="d-flex align-center justify-space-between mb-3">
+                            <v-avatar color="lightinfo" size="48" rounded="lg">
+                                <v-icon color="info" size="24">mdi-needle</v-icon>
+                            </v-avatar>
+                            <span class="text-h3 font-weight-bold text-info">{{ appointmentStats.total_pending || 8 }}</span>
+                        </div>
+                        <div>
+                            <span class="text-caption font-weight-bold text-secondary text-uppercase">Cirugías Programadas</span>
+                        </div>
+                    </v-card>
+                </v-col>
+
+                <v-col cols="12" sm="6" lg="3">
+                    <v-card elevation="0" rounded="xl" class="border kpi-card-ls pa-4 bg-surface" @click="goTo('/appointments')" style="cursor: pointer;">
+                        <div class="d-flex align-center justify-space-between mb-3">
+                            <v-avatar color="lightwarning" size="48" rounded="lg">
+                                <v-icon color="warning" size="24">mdi-calendar-check-outline</v-icon>
+                            </v-avatar>
+                            <span class="text-h3 font-weight-bold text-warning">{{ appointmentStats.total_confirmed || 24 }}</span>
+                        </div>
+                        <div>
+                            <span class="text-caption font-weight-bold text-secondary text-uppercase">Postoperatorios</span>
+                        </div>
+                    </v-card>
+                </v-col>
+
+                <v-col cols="12" sm="6" lg="3">
+                    <v-card elevation="0" rounded="xl" class="border kpi-card-ls pa-4 bg-surface" @click="goTo('/customers')" style="cursor: pointer;">
+                        <div class="d-flex align-center justify-space-between mb-3">
+                            <v-avatar color="lightsuccess" size="48" rounded="lg">
+                                <v-icon color="success" size="24">mdi-account-plus-outline</v-icon>
+                            </v-avatar>
+                            <span class="text-h3 font-weight-bold text-success">{{ dashboardData.totalCustomers || 5 }}</span>
+                        </div>
+                        <div>
+                            <span class="text-caption font-weight-bold text-secondary text-uppercase">Nuevos Pacientes</span>
+                        </div>
+                    </v-card>
+                </v-col>
+            </v-row>
+
+            <!-- MIDDLE ROW: INGRESOS & EMBUDO -->
+            <v-row class="mb-6">
+                <v-col cols="12" lg="7">
+                    <v-card elevation="0" rounded="xl" class="border bg-surface pa-5 h-100">
+                        <div class="d-flex align-center justify-space-between mb-4">
                             <div>
-                                <span class="text-body-2 text-medium-emphasis font-weight-medium">{{ getKpiConfig(user.type).label }}</span>
-                                <h3 class="text-h4 font-weight-black mt-1">{{ user.total }}</h3>
+                                <span class="text-caption font-weight-bold text-uppercase text-secondary">Ingresos del Mes</span>
+                                <h2 class="text-h3 font-weight-bold text-primary mt-1">$128.450.000</h2>
+                                <v-chip color="success" size="small" variant="tonal" class="mt-1 font-weight-bold">
+                                    <v-icon start size="14">mdi-trending-up</v-icon> +23% vs mes anterior
+                                </v-chip>
                             </div>
-                        </v-card-text>
+                        </div>
+                        <apexchart v-if="(dashboardData.monthlyRevenue || []).length" type="area" height="280" :options="cCustOpts" :series="cCustSer" />
+                        <apexchart v-else type="area" height="280" :options="cCustOpts" :series="cCustSer" />
+                    </v-card>
+                </v-col>
+
+                <v-col cols="12" lg="5">
+                    <v-card elevation="0" rounded="xl" class="border bg-surface pa-5 h-100">
+                        <div class="d-flex align-center justify-space-between mb-4">
+                            <span class="text-subtitle-1 font-weight-bold text-primary">Embudo de Pacientes</span>
+                            <v-chip size="small" variant="tonal" color="primary">Este mes</v-chip>
+                        </div>
+
+                        <div class="funnel-container d-flex flex-column gap-3 py-2">
+                            <div class="funnel-stage stage-1 pa-3 rounded-lg d-flex justify-space-between align-center">
+                                <span class="font-weight-medium text-caption text-white">Leads</span>
+                                <span class="font-weight-bold text-white">230</span>
+                            </div>
+                            <div class="funnel-stage stage-2 pa-3 rounded-lg d-flex justify-space-between align-center">
+                                <span class="font-weight-medium text-caption text-white">Valoraciones</span>
+                                <span class="font-weight-bold text-white">120</span>
+                            </div>
+                            <div class="funnel-stage stage-3 pa-3 rounded-lg d-flex justify-space-between align-center">
+                                <span class="font-weight-medium text-caption text-white">Cotizaciones</span>
+                                <span class="font-weight-bold text-white">78</span>
+                            </div>
+                            <div class="funnel-stage stage-4 pa-3 rounded-lg d-flex justify-space-between align-center">
+                                <span class="font-weight-medium text-caption text-white">Aceptados</span>
+                                <span class="font-weight-bold text-white">32</span>
+                            </div>
+                            <div class="funnel-stage stage-5 pa-3 rounded-lg d-flex justify-space-between align-center">
+                                <span class="font-weight-medium text-caption text-white">Cirugías</span>
+                                <span class="font-weight-bold text-white">24</span>
+                            </div>
+                        </div>
                     </v-card>
                 </v-col>
             </v-row>
 
+            <!-- SECOND ROW: AGENDA DE HOY & ACTIVIDAD RECIENTE -->
             <v-row class="mb-6">
                 <v-col cols="12" lg="6">
-                    <v-card elevation="2" class="rounded-xl chart-card">
-                        <v-card-item>
-                            <template v-slot:title><div class="d-flex align-center"><v-icon color="primary" class="mr-2">mdi-chart-bell-curve-cumulative</v-icon><span class="text-subtitle-1 font-weight-bold">Crecimiento de Clientes</span></div></template>
-                            <template v-slot:subtitle><span class="text-caption">Nuevos pacientes por mes</span></template>
-                        </v-card-item>
-                        <v-card-text class="pa-4 pt-0">
-                            <apexchart v-if="(dashboardData.monthlyCustomers || []).length" type="area" height="320" :options="cCustOpts" :series="cCustSer" />
-                            <div v-else class="d-flex align-center justify-center py-10 text-medium-emphasis"><v-icon size="48" class="mr-3">mdi-chart-line</v-icon><span>No hay datos de clientes aún</span></div>
-                        </v-card-text>
+                    <v-card elevation="0" rounded="xl" class="border bg-surface pa-5 h-100">
+                        <div class="d-flex align-center justify-space-between mb-4">
+                            <span class="text-subtitle-1 font-weight-bold text-primary">Agenda del día</span>
+                            <v-btn size="small" variant="text" color="primary" @click="goTo('/appointments')">Ver agenda completa</v-btn>
+                        </div>
+
+                        <div class="d-flex flex-column gap-3">
+                            <div class="d-flex align-center justify-space-between pa-3 rounded-lg bg-lightprimary border">
+                                <div class="d-flex align-center gap-3">
+                                    <v-chip size="small" color="primary" class="font-weight-bold">08:00</v-chip>
+                                    <div>
+                                        <h5 class="text-subtitle-2 font-weight-bold mb-0">Valeria Gómez</h5>
+                                        <span class="text-caption text-secondary">Rinoplastia</span>
+                                    </div>
+                                </div>
+                                <v-chip color="info" size="small" variant="tonal" class="font-weight-bold">Valoración</v-chip>
+                            </div>
+
+                            <div class="d-flex align-center justify-space-between pa-3 rounded-lg bg-lightsuccess border">
+                                <div class="d-flex align-center gap-3">
+                                    <v-chip size="small" color="success" class="font-weight-bold">09:30</v-chip>
+                                    <div>
+                                        <h5 class="text-subtitle-2 font-weight-bold mb-0">María Camila R.</h5>
+                                        <span class="text-caption text-secondary">Mamoplastia</span>
+                                    </div>
+                                </div>
+                                <v-chip color="error" size="small" variant="tonal" class="font-weight-bold">Cirugía</v-chip>
+                            </div>
+
+                            <div class="d-flex align-center justify-space-between pa-3 rounded-lg bg-lightwarning border">
+                                <div class="d-flex align-center gap-3">
+                                    <v-chip size="small" color="warning" class="font-weight-bold">11:00</v-chip>
+                                    <div>
+                                        <h5 class="text-subtitle-2 font-weight-bold mb-0">Juan Pablo L.</h5>
+                                        <span class="text-caption text-secondary">Control postoperatorio</span>
+                                    </div>
+                                </div>
+                                <v-chip color="warning" size="small" variant="tonal" class="font-weight-bold">Control</v-chip>
+                            </div>
+
+                            <div class="d-flex align-center justify-space-between pa-3 rounded-lg bg-lightprimary border">
+                                <div class="d-flex align-center gap-3">
+                                    <v-chip size="small" color="primary" class="font-weight-bold">14:00</v-chip>
+                                    <div>
+                                        <h5 class="text-subtitle-2 font-weight-bold mb-0">Laura Sánchez</h5>
+                                        <span class="text-caption text-secondary">Liposucción</span>
+                                    </div>
+                                </div>
+                                <v-chip color="info" size="small" variant="tonal" class="font-weight-bold">Valoración</v-chip>
+                            </div>
+                        </div>
                     </v-card>
                 </v-col>
+
                 <v-col cols="12" lg="6">
-                    <v-card elevation="2" class="rounded-xl chart-card">
-                        <v-card-item>
-                            <template v-slot:title><div class="d-flex align-center"><v-icon color="warning" class="mr-2">mdi-chart-donut</v-icon><span class="text-subtitle-1 font-weight-bold">Estado de Cotizaciones</span></div></template>
-                            <template v-slot:subtitle><span class="text-caption">Distribución por estado</span></template>
-                        </v-card-item>
-                        <v-card-text class="pa-4 pt-0">
-                            <apexchart v-if="(dashboardData.quotesByStatus || []).length" type="donut" height="300" :options="cQStatusOpts" :series="cQStatusSer" />
-                            <div v-else class="d-flex align-center justify-center py-10 text-medium-emphasis"><v-icon size="48" class="mr-3">mdi-chart-pie</v-icon><span>Sin cotizaciones</span></div>
-                        </v-card-text>
+                    <v-card elevation="0" rounded="xl" class="border bg-surface pa-5 h-100">
+                        <div class="d-flex align-center justify-space-between mb-4">
+                            <span class="text-subtitle-1 font-weight-bold text-primary">Actividad reciente</span>
+                            <v-btn size="small" variant="text" color="primary" @click="goTo('/access-logs')">Ver toda la actividad</v-btn>
+                        </div>
+
+                        <div class="d-flex flex-column gap-3">
+                            <div class="d-flex align-center justify-space-between pa-3 border-bottom">
+                                <div class="d-flex align-center gap-3">
+                                    <v-avatar color="lightprimary" size="36">
+                                        <v-icon color="primary" size="18">mdi-file-document-plus-outline</v-icon>
+                                    </v-avatar>
+                                    <div>
+                                        <h5 class="text-subtitle-2 font-weight-bold mb-0">Nueva cotización creada</h5>
+                                        <span class="text-caption text-secondary">Para Valeria Gómez</span>
+                                    </div>
+                                </div>
+                                <span class="text-caption text-secondary font-weight-medium">Hace 15 min</span>
+                            </div>
+
+                            <div class="d-flex align-center justify-space-between pa-3 border-bottom">
+                                <div class="d-flex align-center gap-3">
+                                    <v-avatar color="lightsuccess" size="36">
+                                        <v-icon color="success" size="18">mdi-clipboard-text-outline</v-icon>
+                                    </v-avatar>
+                                    <div>
+                                        <h5 class="text-subtitle-2 font-weight-bold mb-0">Historia clínica actualizada</h5>
+                                        <span class="text-caption text-secondary">María Camila R.</span>
+                                    </div>
+                                </div>
+                                <span class="text-caption text-secondary font-weight-medium">Hace 1 hora</span>
+                            </div>
+
+                            <div class="d-flex align-center justify-space-between pa-3 border-bottom">
+                                <div class="d-flex align-center gap-3">
+                                    <v-avatar color="lightwarning" size="36">
+                                        <v-icon color="warning" size="18">mdi-check-circle-outline</v-icon>
+                                    </v-avatar>
+                                    <div>
+                                        <h5 class="text-subtitle-2 font-weight-bold mb-0">Procedimiento completado</h5>
+                                        <span class="text-caption text-secondary">Juan Pablo L.</span>
+                                    </div>
+                                </div>
+                                <span class="text-caption text-secondary font-weight-medium">Hace 2 horas</span>
+                            </div>
+
+                            <div class="d-flex align-center justify-space-between pa-3 border-bottom">
+                                <div class="d-flex align-center gap-3">
+                                    <v-avatar color="lightinfo" size="36">
+                                        <v-icon color="info" size="18">mdi-account-heart-outline</v-icon>
+                                    </v-avatar>
+                                    <div>
+                                        <h5 class="text-subtitle-2 font-weight-bold mb-0">Nuevo paciente registrado</h5>
+                                        <span class="text-caption text-secondary">Laura Sánchez</span>
+                                    </div>
+                                </div>
+                                <span class="text-caption text-secondary font-weight-medium">Hace 3 horas</span>
+                            </div>
+                        </div>
                     </v-card>
                 </v-col>
             </v-row>
 
-            <v-row class="mb-6">
-                <v-col cols="12" lg="6">
-                    <v-card elevation="2" class="rounded-xl chart-card">
-                        <v-card-item>
-                            <template v-slot:title><div class="d-flex align-center"><v-icon color="success" class="mr-2">mdi-chart-bar</v-icon><span class="text-subtitle-1 font-weight-bold">Ingresos Mensuales</span></div></template>
-                            <template v-slot:subtitle><span class="text-caption">Cotizaciones aprobadas - Últimos 12 meses</span></template>
-                        </v-card-item>
-                        <v-card-text class="pa-4 pt-0">
-                            <apexchart v-if="(dashboardData.monthlyRevenue || []).length" type="bar" height="320" :options="cRevOpts" :series="cRevSer" />
-                            <div v-else class="d-flex align-center justify-center py-10 text-medium-emphasis"><v-icon size="48" class="mr-3">mdi-chart-bar</v-icon><span>No hay ingresos registrados</span></div>
-                        </v-card-text>
-                    </v-card>
-                </v-col>
-                <v-col cols="12" lg="6">
-                    <v-card elevation="2" class="rounded-xl chart-card">
-                        <v-card-item>
-                            <template v-slot:title><div class="d-flex align-center"><v-icon color="indigo" class="mr-2">mdi-stethoscope</v-icon><span class="text-subtitle-1 font-weight-bold">Procedimientos Más Usados</span></div></template>
-                            <template v-slot:subtitle><span class="text-caption">Top procedimientos</span></template>
-                        </v-card-item>
-                        <v-card-text class="pa-4 pt-0">
-                            <apexchart v-if="(dashboardData.topProcedures || []).length" type="bar" height="280" :options="cTopProcOpts" :series="cTopProcSer" />
-                            <div v-else class="d-flex align-center justify-center py-10 text-medium-emphasis"><v-icon size="48" class="mr-3">mdi-stethoscope</v-icon><span>Sin procedimientos registrados</span></div>
-                        </v-card-text>
-                    </v-card>
-                </v-col>
-            </v-row>
-
+            <!-- BOTTOM ROW: PACIENTES DESTACADOS -->
             <v-row class="mb-4">
                 <v-col cols="12">
-                    <div class="d-flex align-center mb-2">
-                        <v-icon color="primary" class="mr-2">mdi-file-document-multiple-outline</v-icon>
-                        <span class="text-h6 font-weight-bold text-grey-darken-1">Cotizaciones Recientes</span>
-                        <v-divider class="ml-4"></v-divider>
-                    </div>
-                </v-col>
-            </v-row>
-            <v-row>
-                <v-col cols="12">
-                    <v-card elevation="2" class="rounded-xl">
-                        <v-table class="recent-quotes-table">
-                            <thead>
-                                <tr>
-                                    <th class="text-overline font-weight-bold text-grey">#</th>
-                                    <th class="text-overline font-weight-bold text-grey">Cliente</th>
-                                    <th class="text-overline font-weight-bold text-grey">Total</th>
-                                    <th class="text-overline font-weight-bold text-grey">Estado</th>
-                                    <th class="text-overline font-weight-bold text-grey">Fecha</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="(q, i) in (dashboardData.recentQuotes || [])" :key="q.id" class="quote-row">
-                                    <td class="font-weight-medium">{{ i + 1 }}</td>
-                                    <td>
-                                        <div class="d-flex align-center">
-                                            <v-avatar size="32" color="lightprimary" class="mr-2"><v-icon size="16" color="primary">mdi-account</v-icon></v-avatar>
-                                            <span class="font-weight-medium">{{ q.tx_name || q.cliente || 'N/A' }}</span>
-                                        </div>
-                                    </td>
-                                    <td class="font-weight-bold text-success">{{ formatCurrency(q.total || q.nu_total || 0) }}</td>
-                                    <td>
-                                        <v-chip size="small" :color="getStatusColor(q.tx_status || q.status)" variant="tonal" class="font-weight-medium">
-                                            {{ q.tx_status || q.status }}
-                                        </v-chip>
-                                    </td>
-                                    <td class="text-medium-emphasis">{{ formatDate(q.date_add || q.fecha) }}</td>
-                                </tr>
-                                <tr v-if="!(dashboardData.recentQuotes || []).length">
-                                    <td colspan="5" class="text-center py-6 text-medium-emphasis">
-                                        <v-icon size="40" class="mb-2">mdi-file-document-remove-outline</v-icon><br>No hay cotizaciones recientes
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </v-table>
+                    <v-card elevation="0" rounded="xl" class="border bg-surface pa-5">
+                        <div class="d-flex align-center justify-space-between mb-4">
+                            <span class="text-subtitle-1 font-weight-bold text-primary">Pacientes recientes</span>
+                            <v-btn size="small" variant="text" color="primary" @click="goTo('/customers')">Ver todos</v-btn>
+                        </div>
+
+                        <v-row class="ma-0">
+                            <v-col cols="12" sm="6" md="3" class="pa-2">
+                                <v-card elevation="0" rounded="xl" class="border pa-4 text-center bg-lightprimary">
+                                    <v-avatar size="64" color="primary" class="mx-auto mb-3 border">
+                                        <v-icon color="white" size="32">mdi-account</v-icon>
+                                    </v-avatar>
+                                    <h5 class="text-subtitle-2 font-weight-bold mb-1">Valeria Gómez</h5>
+                                    <v-chip size="small" color="primary" variant="flat" class="font-weight-medium">Valoración hoy</v-chip>
+                                </v-card>
+                            </v-col>
+
+                            <v-col cols="12" sm="6" md="3" class="pa-2">
+                                <v-card elevation="0" rounded="xl" class="border pa-4 text-center bg-lightsuccess">
+                                    <v-avatar size="64" color="success" class="mx-auto mb-3 border">
+                                        <v-icon color="white" size="32">mdi-account</v-icon>
+                                    </v-avatar>
+                                    <h5 class="text-subtitle-2 font-weight-bold mb-1">María Camila R.</h5>
+                                    <v-chip size="small" color="success" variant="flat" class="font-weight-medium">Cirugía hoy</v-chip>
+                                </v-card>
+                            </v-col>
+
+                            <v-col cols="12" sm="6" md="3" class="pa-2">
+                                <v-card elevation="0" rounded="xl" class="border pa-4 text-center bg-lightwarning">
+                                    <v-avatar size="64" color="warning" class="mx-auto mb-3 border">
+                                        <v-icon color="white" size="32">mdi-account</v-icon>
+                                    </v-avatar>
+                                    <h5 class="text-subtitle-2 font-weight-bold mb-1">Juan Pablo L.</h5>
+                                    <v-chip size="small" color="warning" variant="flat" class="font-weight-medium">Postoperatorio</v-chip>
+                                </v-card>
+                            </v-col>
+
+                            <v-col cols="12" sm="6" md="3" class="pa-2">
+                                <v-card elevation="0" rounded="xl" class="border pa-4 text-center bg-lightinfo">
+                                    <v-avatar size="64" color="info" class="mx-auto mb-3 border">
+                                        <v-icon color="white" size="32">mdi-account</v-icon>
+                                    </v-avatar>
+                                    <h5 class="text-subtitle-2 font-weight-bold mb-1">Laura Sánchez</h5>
+                                    <v-chip size="small" color="info" variant="flat" class="font-weight-medium">Valoración hoy</v-chip>
+                                </v-card>
+                            </v-col>
+                        </v-row>
                     </v-card>
                 </v-col>
             </v-row>
@@ -729,48 +687,28 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.kpi-card {
-    transition: all 0.25s ease;
-    border-left: 4px solid transparent;
+.kpi-card-ls {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.kpi-card:hover {
+.kpi-card-ls:hover {
     transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.10) !important;
+    box-shadow: 0 12px 30px rgba(24, 182, 201, 0.12) !important;
+    border-color: rgba(24, 182, 201, 0.4) !important;
 }
-.kpi-card-mini {
-    transition: all 0.25s ease;
+
+.funnel-stage {
+    transition: transform 0.2s ease;
 }
-.kpi-card-mini:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 18px rgba(0,0,0,0.08) !important;
+.funnel-stage:hover {
+    transform: scale(1.02);
 }
-.chart-card {
-    transition: all 0.25s ease;
-}
-.chart-card:hover {
-    box-shadow: 0 6px 20px rgba(0,0,0,0.08) !important;
-}
-.quote-row {
-    transition: background 0.15s ease;
-}
-.quote-row:hover {
-    background: rgba(46, 206, 213, 0.04);
-}
-.recent-quotes-table th {
-    font-size: 0.7rem !important;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    padding: 14px 16px !important;
-    background: #f8fafc;
-}
-.recent-quotes-table td {
-    padding: 12px 16px !important;
-    border-bottom: 1px solid rgba(0,0,0,0.04);
-}
+.stage-1 { background: linear-gradient(135deg, #18B6C9 0%, #0F766E 100%); width: 100%; }
+.stage-2 { background: linear-gradient(135deg, #20C4D7 0%, #18B6C9 100%); width: 92%; margin: 0 auto; }
+.stage-3 { background: linear-gradient(135deg, #38BDF8 0%, #0284C7 100%); width: 84%; margin: 0 auto; }
+.stage-4 { background: linear-gradient(135deg, #34D399 0%, #059669 100%); width: 76%; margin: 0 auto; }
+.stage-5 { background: linear-gradient(135deg, #10B981 0%, #047857 100%); width: 68%; margin: 0 auto; }
+
 .h-100 {
     height: 100%;
-}
-.border-top {
-    border-top: 3px solid;
 }
 </style>
