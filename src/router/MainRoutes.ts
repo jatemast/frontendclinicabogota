@@ -292,6 +292,24 @@ const MainRoutes = {
             masterOnly: true
           }
         },
+        {
+          name: 'SaasCustomerTypes',
+          path: '/saas/customer-types',
+          component: () => import('@/views/saas/CustomerTypeList.vue'),
+          meta: {
+            requiresAuth: true,
+            masterOnly: true
+          }
+        },
+        {
+          name: 'SaasCustomerTypesUnderscore',
+          path: '/saas/customer_types',
+          component: () => import('@/views/saas/CustomerTypeList.vue'),
+          meta: {
+            requiresAuth: true,
+            masterOnly: true
+          }
+        },
 
     ]
 

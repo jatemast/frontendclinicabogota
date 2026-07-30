@@ -77,6 +77,17 @@ const handleLogin = async () => {
                 localStorage.removeItem('user_photo');
             }
 
+            // Nomenclatura de Historias según Tipo de Cliente / Empresa
+            if (response.data.customer_type) {
+                localStorage.setItem('customer_type_singular', response.data.customer_type.tx_history_singular || 'Historia Clínica');
+                localStorage.setItem('customer_type_plural', response.data.customer_type.tx_history_plural || 'Historias Clínicas');
+                localStorage.setItem('customer_type_name', response.data.customer_type.tx_name || 'Clínica');
+            } else {
+                localStorage.setItem('customer_type_singular', 'Historia Clínica');
+                localStorage.setItem('customer_type_plural', 'Historias Clínicas');
+                localStorage.setItem('customer_type_name', 'Clínica');
+            }
+
             // Refrescar permisos inmediatamente después del login
             await refreshPermissions();
 

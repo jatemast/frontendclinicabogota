@@ -49,8 +49,6 @@ Thumbs.db
 *.wmv
 
 # Environment variables (sensitive)
-.env
-.env.local
 .env.*.local
 
 # Build artifacts
@@ -62,3 +60,4 @@ dist.zip
 branch_structure.json
 temp_auto_push.bat
 temp_interactive_push.bat
+config.bat
